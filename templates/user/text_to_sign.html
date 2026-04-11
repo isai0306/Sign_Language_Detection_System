@@ -5,9 +5,37 @@
 {% block extra_css %}
 <style>
 :root {
-  --primary: #2563eb;
-  --accent: #22c55e;
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --primary: #3b82f6;
+  --accent: #10b981;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+}
+
+.mic-btn {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 99px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.mic-btn:hover { background: rgba(59, 130, 246, 0.4); }
+.mic-btn.recording {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .text-to-sign-container {
@@ -47,9 +75,11 @@
 }
 
 .input-group label {
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-muted);
   margin-bottom: 0.8rem;
   font-size: 1.1rem;
 }
@@ -320,7 +350,10 @@
   <div class="input-section">
     <form method="POST" action="{{ url_for('user.text_to_sign') }}" id="textForm">
       <div class="input-group">
-        <label for="inputText">Enter Your Message</label>
+        <label for="inputText">
+          <span>Enter Your Message</span>
+          <button type="button" id="micBtn" class="mic-btn">🎙️ Speak</button>
+        </label>
         <textarea 
           id="inputText" 
           name="input_text" 
@@ -419,6 +452,49 @@ if (inputText.value) {
   const text = inputText.value.trim();
   const words = text ? text.split(/\s+/).length : 0;
   wordCount.textContent = words;
+}
+
+// Web Speech API
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micBtn = document.getElementById('micBtn');
+
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  
+  let isRecording = false;
+  
+  micBtn.addEventListener('click', () => {
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+  });
+
+  recognition.onstart = () => {
+    isRecording = true;
+    micBtn.classList.add('recording');
+    micBtn.innerHTML = '🔴 Listening...';
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    inputText.value += (inputText.value.length ? ' ' : '') + transcript;
+    
+    // Update word count
+    const text = inputText.value.trim();
+    wordCount.textContent = text ? text.split(/\s+/).length : 0;
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    micBtn.innerHTML = '🎙️ Speak';
+  };
+} else {
+  micBtn.style.display = 'none'; // Hide if not supported
 }
 
 // Play sequence animation

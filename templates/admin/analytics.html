@@ -208,21 +208,7 @@
     </div>
 
     {% if daily_usage %}
-    <div class="usage-chart">
-      {% set max_count = daily_usage | map(attribute='count') | max %}
-      {% for day in daily_usage[-30:] %}
-      <div class="usage-bar" 
-           style="height: {{ (day.count / max_count * 100) if max_count > 0 else 0 }}%;"
-           title="{{ day.date }}: {{ day.count }} detections">
-        <span class="value">{{ day.count }}</span>
-      </div>
-      {% endfor %}
-    </div>
-    <div class="chart-labels">
-      {% for day in daily_usage[-30:] %}
-      <div class="label">{{ day.date.strftime('%m/%d') }}</div>
-      {% endfor %}
-    </div>
+    <canvas id="usageLine" height="110" style="max-height:300px;width:100%;margin-top:0.5rem;"></canvas>
     {% else %}
     <div class="empty-state">
       <div class="icon">📊</div>
@@ -314,14 +300,15 @@
         </tr>
       </thead>
       <tbody>
+        {% set emax = (emergency_trends | map(attribute='count') | max) or 1 %}
         {% for trend in emergency_trends[-10:] %}
         <tr>
-          <td>{{ trend.date.strftime('%B %d, %Y') }}</td>
+          <td>{{ trend.date.strftime('%B %d, %Y') if trend.date else '' }}</td>
           <td><strong>{{ trend.count }}</strong></td>
           <td>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <div style="background: #fee2e2; height: 8px; width: 200px; border-radius: 4px; overflow: hidden;">
-                <div style="background: var(--danger); height: 100%; width: {{ (trend.count / (emergency_trends | map(attribute='count') | max) * 100)|round }}%;"></div>
+                <div style="background: var(--danger); height: 100%; width: {{ (trend.count / emax * 100)|round }}%;"></div>
               </div>
             </div>
           </td>
@@ -337,4 +324,37 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const usageChart = {{ usage_chart | tojson | safe }};
+  if (usageChart && usageChart.length && document.getElementById('usageLine')) {
+    const labels = usageChart.map(r => r.day);
+    const data = usageChart.map(r => r.count);
+    new Chart(document.getElementById('usageLine'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Detections',
+          data,
+          borderColor: 'rgba(59, 130, 246, 0.9)',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+          fill: true,
+          tension: 0.25,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { maxRotation: 45, minRotation: 0 } },
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+</script>
 {% endblock %}

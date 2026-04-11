@@ -44,10 +44,22 @@
       <div style="margin-bottom: 1.5rem;">
         <label for="model_type" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Model Type</label>
         <select name="model_type" id="model_type" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
-          <option value="neural_network">CNN (Deep Learning - Recommended)</option>
-          <option value="random_forest">Random Forest (Traditional ML)</option>
+          <option value="neural_network">CNN (single-frame, fast)</option>
+          <option value="lstm">LSTM (sequence, higher accuracy)</option>
         </select>
       </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label for="sequence_length" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Sequence length (LSTM)</label>
+        <input type="number" name="sequence_length" id="sequence_length" value="25" min="10" max="40" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label for="epochs" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Max epochs</label>
+        <input type="number" name="epochs" id="epochs" value="120" min="20" max="300" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+      </div>
+
+      <input type="hidden" name="use_augmentation" value="true">
 
       <button type="submit" style="width: 100%; padding: 1rem; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
         🚀 Start Training

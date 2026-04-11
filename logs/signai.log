@@ -1,0 +1,34 @@
+2026-04-11 10:00:54,736 [ERROR] signai.api: detect-gesture: sequence index must be integer, not 'slice'
+Traceback (most recent call last):
+  File "E:\project\Sign Language\routes\api_routes.py", line 120, in detect_gesture
+    out = detection_service.detect_gesture_payload(
+  File "E:\project\Sign Language\services\detection_service.py", line 200, in detect_gesture_payload
+    if st["sentence_tokens"][-1:] != [final_gesture]:
+TypeError: sequence index must be integer, not 'slice'
+2026-04-11 10:00:55,568 [ERROR] signai.api: detect-gesture: sequence index must be integer, not 'slice'
+Traceback (most recent call last):
+  File "E:\project\Sign Language\routes\api_routes.py", line 120, in detect_gesture
+    out = detection_service.detect_gesture_payload(
+  File "E:\project\Sign Language\services\detection_service.py", line 200, in detect_gesture_payload
+    if st["sentence_tokens"][-1:] != [final_gesture]:
+TypeError: sequence index must be integer, not 'slice'
+2026-04-11 10:00:56,505 [ERROR] signai.api: detect-gesture: sequence index must be integer, not 'slice'
+Traceback (most recent call last):
+  File "E:\project\Sign Language\routes\api_routes.py", line 120, in detect_gesture
+    out = detection_service.detect_gesture_payload(
+  File "E:\project\Sign Language\services\detection_service.py", line 200, in detect_gesture_payload
+    if st["sentence_tokens"][-1:] != [final_gesture]:
+TypeError: sequence index must be integer, not 'slice'
+2026-04-11 10:00:57,084 [ERROR] signai.api: detect-gesture: sequence index must be integer, not 'slice'
+Traceback (most recent call last):
+  File "E:\project\Sign Language\routes\api_routes.py", line 120, in detect_gesture
+    out = detection_service.detect_gesture_payload(
+  File "E:\project\Sign Language\services\detection_service.py", line 200, in detect_gesture_payload
+    if st["sentence_tokens"][-1:] != [final_gesture]:
+TypeError: sequence index must be integer, not 'slice'
+2026-04-11 11:33:43,930 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 11:33:43,932 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 11:33:43,944 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 11:33:44,004 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 11:33:44,009 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 11:33:44,021 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)

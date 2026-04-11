@@ -3,15 +3,18 @@ SignAI - Simplified Database Schema
 Core functionalities: Sign→Text, Text→Sign, Model Training
 """
 
+import os
 import mysql.connector
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
-# Database Configuration
-DB_HOST = 'localhost'
-DB_USER = 'root'
-DB_PASSWORD = ''
-DB_NAME = 'signai_db'
+# Database Configuration (match config.py / set SIGNAI_DB_PASSWORD if MySQL has a password)
+DB_HOST = os.environ.get("SIGNAI_DB_HOST", "localhost")
+DB_USER = os.environ.get("SIGNAI_DB_USER", "root")
+DB_PASSWORD = os.environ.get(
+    "SIGNAI_DB_PASSWORD", os.environ.get("MYSQL_PASSWORD", "")
+)
+DB_NAME = os.environ.get("SIGNAI_DB_NAME", "signai_db")
 
 def create_database():
     """Create database"""
@@ -157,11 +160,55 @@ def create_tables():
         cursor.close()
         conn.close()
         print("✅ All tables created")
+        _run_migrations()
         return True
 
     except mysql.connector.Error as e:
         print(f"❌ Error: {e}")
         return False
+
+
+def _run_migrations():
+    """Apply additive schema updates for newer SignAI features."""
+    try:
+        conn = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            charset='utf8',
+        )
+        cur = conn.cursor()
+        statements = [
+            "ALTER TABLE admins ADD COLUMN role VARCHAR(40) DEFAULT 'admin'",
+            "ALTER TABLE gestures ADD COLUMN is_emergency TINYINT(1) NOT NULL DEFAULT 0",
+            """ALTER TABLE gesture_history ADD COLUMN is_emergency TINYINT(1) NOT NULL DEFAULT 0""",
+            "ALTER TABLE gesture_history ADD COLUMN sentence_text VARCHAR(500) NULL",
+        ]
+        for sql in statements:
+            try:
+                cur.execute(sql)
+                conn.commit()
+            except mysql.connector.Error:
+                pass
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS emergency_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                gesture_name VARCHAR(80) NOT NULL,
+                confidence_score DECIMAL(6,4) NULL,
+                detail VARCHAR(500) NULL,
+                created_at DATETIME NOT NULL,
+                INDEX idx_emergency_created (created_at),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("✅ Schema migrations applied")
+    except mysql.connector.Error as e:
+        print(f"⚠️ Migration note: {e}")
 
 def insert_default_data():
     """Insert default admin and gestures"""
@@ -185,6 +232,27 @@ def insert_default_data():
             """, ("admin", "System Admin", "admin@signai.com", hashed_password, datetime.now()))
             print("✅ Default admin created (admin/admin123)")
 
+        # Demo user (only when users table is empty — for first-run login testing)
+        cursor.execute("SELECT COUNT(*) FROM users")
+        if cursor.fetchone()[0] == 0:
+            demo_pw = generate_password_hash("signai123")
+            cursor.execute(
+                """
+                INSERT INTO users
+                (register_number, name, email, phone, password, created_at, status)
+                VALUES (%s, %s, %s, %s, %s, %s, 'ACTIVE')
+                """,
+                (
+                    "SIGNAI-DEMO-1",
+                    "Demo User",
+                    "demo@signai.local",
+                    "",
+                    demo_pw,
+                    datetime.now(),
+                ),
+            )
+            print("✅ Demo user: demo@signai.local / signai123")
+
         # Basic Gestures
         cursor.execute("SELECT COUNT(*) FROM gestures")
         if cursor.fetchone()[0] == 0:
@@ -196,8 +264,8 @@ def insert_default_data():
                 ('NO', 'Negative response', 'signs/no.png', 'BASIC'),
                 ('PLEASE', 'Polite request', 'signs/please.png', 'BASIC'),
                 ('SORRY', 'Apology', 'signs/sorry.png', 'BASIC'),
-                ('WATER', 'Request water', '💧', 'signs/water.png', 'BASIC'),
-                ('FOOD', 'Request food', '🍽️', 'signs/food.png', 'BASIC'),
+                ('WATER', 'Request water', 'signs/water.png', 'BASIC'),
+                ('FOOD', 'Request food', 'signs/food.png', 'BASIC'),
             ]
             cursor.executemany("""
                 INSERT INTO gestures 

@@ -8,18 +8,32 @@ from datetime import datetime
 import mysql.connector
 import numpy as np
 import base64
-import cv2
 
 from config import Config
-from ai.hand_detector import HandDetector
-from ai.gesture_trainer import GestureTrainer  # Enhanced trainer
 from functools import wraps
 
 training_bp = Blueprint('training', __name__)
 
-# Initialize modules
-hand_detector = HandDetector()
-trainer = GestureTrainer()
+hand_detector = None
+trainer = None
+_training_ready = False
+
+
+def _bootstrap_training():
+    global hand_detector, trainer, _training_ready
+    if _training_ready:
+        return
+    from ai.hand_detector import HandDetector
+    from ai.gesture_trainer import GestureTrainer
+
+    hand_detector = HandDetector()
+    trainer = GestureTrainer()
+    _training_ready = True
+
+
+@training_bp.before_request
+def _training_lazy_load():
+    _bootstrap_training()
 
 def admin_required(f):
     @wraps(f)
@@ -99,6 +113,8 @@ def add_sample():
     }
     """
     try:
+        import cv2
+
         data = request.get_json()
         gesture_name = data.get('gesture_name')
         frame_data = data.get('frame')
@@ -178,8 +194,11 @@ def train_model():
     """Train gesture recognition model with enhanced CNN"""
     if request.method == 'POST':
         model_type = request.form.get('model_type', 'neural_network')
+        if model_type == 'random_forest':
+            model_type = 'neural_network'
         use_augmentation = request.form.get('use_augmentation', 'true').lower() == 'true'
         epochs = int(request.form.get('epochs', '150'))
+        seq_len = int(request.form.get('sequence_length', Config.SEQUENCE_LENGTH))
         
         print(f"\n{'='*60}")
         print(f"🚀 Starting Training")
@@ -195,7 +214,8 @@ def train_model():
                 model_type=model_type,
                 model_path='static/models/gesture_model.h5',
                 use_augmentation=use_augmentation,
-                epochs=epochs
+                epochs=epochs,
+                sequence_length=seq_len,
             )
             
             if accuracy:

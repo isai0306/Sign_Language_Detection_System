@@ -37,6 +37,7 @@ class GestureRecognizer:
         self.confidence_threshold = confidence_threshold
         self.gesture_classes = []
         self.prediction_history = deque(maxlen=5)  # Reduced for faster response
+        self._model_kind = None  # 'cnn' | 'lstm'
         
         # Load model if path provided
         if model_path and os.path.exists(model_path):
@@ -56,6 +57,12 @@ class GestureRecognizer:
         try:
             self.model = keras.models.load_model(model_path)
             print(f"✅ Model loaded from {model_path}")
+            inp = self.model.input_shape
+            if inp and len(inp) == 3 and (inp[1] is None or inp[1] > 3):
+                self._model_kind = 'lstm'
+            else:
+                self._model_kind = 'cnn'
+            print(f"   Model kind: {self._model_kind}")
             
             # Load gesture classes if available
             classes_path = model_path.replace('.h5', '_classes.pkl')
@@ -68,6 +75,7 @@ class GestureRecognizer:
             
         except Exception as e:
             print(f"❌ Error loading model: {e}")
+            self._model_kind = None
             return False
     
     def preprocess_landmarks(self, landmarks):
@@ -109,6 +117,53 @@ class GestureRecognizer:
         
         return lm
     
+    def predict_raw(self, landmarks, apply_threshold=False):
+        """
+        Single forward pass (no internal temporal deque). Used with external smoothing.
+        """
+        if self.model is None or self._model_kind != 'cnn':
+            return self._dummy_prediction()
+        try:
+            processed_lm = self.preprocess_landmarks(landmarks)
+            if processed_lm is None:
+                return self._dummy_prediction()
+            input_data = processed_lm.reshape(1, 21, 3, 1)
+            predictions = self.model.predict(input_data, verbose=0)
+            return self._scores_to_dict(predictions[0], apply_threshold=apply_threshold)
+        except Exception as e:
+            print(f"Error in predict_raw: {e}")
+            return self._dummy_prediction()
+
+    def predict_lstm(self, sequence_flat, apply_threshold=False):
+        """
+        sequence_flat: numpy (seq_len, 63) normalized landmark vectors per timestep.
+        """
+        if self.model is None or self._model_kind != 'lstm':
+            return self._dummy_prediction()
+        try:
+            x = np.asarray(sequence_flat, dtype=np.float32).reshape(1, sequence_flat.shape[0], 63)
+            predictions = self.model.predict(x, verbose=0)
+            return self._scores_to_dict(predictions[0], apply_threshold=apply_threshold)
+        except Exception as e:
+            print(f"Error in predict_lstm: {e}")
+            return self._dummy_prediction()
+
+    def _scores_to_dict(self, scores, apply_threshold=True):
+        confidence = float(np.max(scores))
+        class_idx = int(np.argmax(scores))
+        if self.gesture_classes:
+            gesture_name = self.gesture_classes[class_idx]
+        else:
+            gesture_name = f"Gesture_{class_idx}"
+        if apply_threshold and confidence < self.confidence_threshold:
+            gesture_name = "UNKNOWN"
+        return {
+            'gesture': gesture_name,
+            'confidence': confidence,
+            'class_index': class_idx,
+            'all_scores': scores.tolist() if hasattr(scores, 'tolist') else list(scores),
+        }
+
     def predict(self, landmarks, smooth=True):
         """
         Predict gesture from hand landmarks with enhanced processing
@@ -124,6 +179,9 @@ class GestureRecognizer:
             return self._dummy_prediction()
         
         try:
+            if self._model_kind == 'lstm':
+                return self._dummy_prediction()
+
             # Preprocess landmarks
             processed_lm = self.preprocess_landmarks(landmarks)
             if processed_lm is None:
@@ -150,39 +208,18 @@ class GestureRecognizer:
             else:
                 self.prediction_history.append(predictions[0])
             
-            # Get best prediction
-            confidence = float(np.max(predictions[0]))
-            class_idx = int(np.argmax(predictions[0]))
-            
-            # Get top 3 predictions for debugging
+            d = self._scores_to_dict(predictions[0], apply_threshold=True)
             top_3_indices = np.argsort(predictions[0])[-3:][::-1]
-            top_3_scores = predictions[0][top_3_indices]
-            
-            # Get gesture name
             if self.gesture_classes:
-                gesture_name = self.gesture_classes[class_idx]
-                top_3_gestures = [(self.gesture_classes[i], float(predictions[0][i])) 
+                top_3_gestures = [(self.gesture_classes[i], float(predictions[0][i]))
                                   for i in top_3_indices]
             else:
-                gesture_name = f"Gesture_{class_idx}"
-                top_3_gestures = [(f"Gesture_{i}", float(predictions[0][i])) 
+                top_3_gestures = [(f"Gesture_{i}", float(predictions[0][i]))
                                   for i in top_3_indices]
-            
-            # Print debug info
-            print(f"Prediction: {gesture_name} ({confidence:.2%})")
-            print(f"Top 3: {top_3_gestures}")
-            
-            # Check confidence threshold
-            if confidence < self.confidence_threshold:
-                gesture_name = "UNKNOWN"
-            
-            return {
-                'gesture': gesture_name,
-                'confidence': confidence,
-                'class_index': class_idx,
-                'all_scores': predictions[0].tolist(),
-                'top_3': top_3_gestures
-            }
+            d['top_3'] = top_3_gestures
+            d['class_index'] = int(np.argmax(predictions[0]))
+            print(f"Prediction: {d['gesture']} ({d['confidence']:.2%})")
+            return d
             
         except Exception as e:
             print(f"Error in prediction: {e}")

@@ -143,15 +143,16 @@ class GestureTrainer:
         return augmented
     
     def train_model(self, model_type='neural_network', model_path='static/models/gesture_model.h5', 
-                    use_augmentation=True, epochs=150):
+                    use_augmentation=True, epochs=150, sequence_length=25):
         """
-        Train enhanced CNN model
+        Train gesture model (CNN or LSTM sequence classifier).
         
         Args:
-            model_type: 'neural_network' (CNN recommended)
+            model_type: 'neural_network' (CNN), 'lstm' (sequence), or 'random_forest' (maps to CNN)
             model_path: Where to save trained model
             use_augmentation: Whether to use data augmentation
             epochs: Number of training epochs
+            sequence_length: Timesteps for LSTM
             
         Returns:
             accuracy: Model accuracy on test set
@@ -159,6 +160,15 @@ class GestureTrainer:
         if not TRAINING_AVAILABLE:
             print("❌ Training libraries not installed")
             return None
+
+        if model_type == 'lstm':
+            return self._train_lstm_model(
+                model_path, use_augmentation, epochs, sequence_length
+            )
+
+        if model_type == 'random_forest':
+            print("⚠️ Random Forest not implemented; training CNN instead.")
+            model_type = 'neural_network'
         
         # Prepare data
         X, y, gesture_classes = self._prepare_training_data(use_augmentation)
@@ -223,6 +233,102 @@ class GestureTrainer:
         y = np.array(y)
         
         return X, y, gesture_classes
+
+    def _landmark_to_flat_normalized(self, lm_21_3):
+        """Wrist-centered, scale-normalized flatten (63,) — matches runtime pipeline."""
+        lm = np.array(lm_21_3, dtype=np.float32).reshape(21, 3)
+        wrist = lm[0].copy()
+        lm = lm - wrist
+        d = np.max(np.linalg.norm(lm, axis=1))
+        if d > 1e-6:
+            lm = lm / d
+        return lm.reshape(-1)
+
+    def _prepare_flat_vectors(self, use_augmentation=True):
+        """Per-frame flat vectors for sequence model training."""
+        X = []
+        y = []
+        gesture_classes = sorted(list(self.samples.keys()))
+        for gesture_idx, gesture_name in enumerate(gesture_classes):
+            for landmarks in self.samples[gesture_name]:
+                lm = np.array(landmarks).reshape(21, 3)
+                if use_augmentation:
+                    for aug_lm in self.augment_data(lm):
+                        X.append(self._landmark_to_flat_normalized(aug_lm))
+                        y.append(gesture_idx)
+                else:
+                    X.append(self._landmark_to_flat_normalized(lm))
+                    y.append(gesture_idx)
+        return np.array(X, dtype=np.float32), np.array(y), gesture_classes
+
+    def _build_lstm_sequences(self, X_flat, y, seq_len, samples_per_class=96):
+        rng = np.random.default_rng(42)
+        by_class = defaultdict(list)
+        for xi, yi in zip(X_flat, y):
+            by_class[int(yi)].append(xi)
+        X_seq, y_seq = [], []
+        for cls, frames in by_class.items():
+            arr = np.stack(frames) if len(frames) > 1 else np.stack([frames[0]] * 2)
+            n_gen = max(samples_per_class, min(200, len(arr) * 10))
+            for _ in range(n_gen):
+                idx = rng.integers(0, len(arr), size=seq_len)
+                clip = arr[idx].copy()
+                clip += rng.normal(0, 0.008, clip.shape).astype(np.float32)
+                X_seq.append(clip)
+                y_seq.append(cls)
+        return np.stack(X_seq, dtype=np.float32), np.array(y_seq)
+
+    def _train_lstm_model(self, model_path, use_augmentation, epochs, sequence_length):
+        X_flat, y_flat, gesture_classes = self._prepare_flat_vectors(use_augmentation)
+        if len(X_flat) < 20 or len(gesture_classes) < 2:
+            print("❌ Not enough data for LSTM training")
+            return None
+        X_seq, y_seq = self._build_lstm_sequences(X_flat, y_flat, sequence_length)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_seq, y_seq, test_size=0.2, random_state=42, stratify=y_seq
+        )
+        num_classes = len(np.unique(y_train))
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+
+        model = models.Sequential([
+            layers.Input(shape=(sequence_length, 63)),
+            layers.Masking(),
+            layers.LSTM(96, return_sequences=True),
+            layers.Dropout(0.35),
+            layers.LSTM(48),
+            layers.Dropout(0.35),
+            layers.Dense(128, activation='relu', kernel_regularizer=regularizers.l2(0.001)),
+            layers.Dense(num_classes, activation='softmax'),
+        ])
+        model.compile(
+            optimizer=keras.optimizers.Adam(learning_rate=0.001),
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy'],
+        )
+        callbacks = [
+            EarlyStopping(monitor='val_accuracy', patience=18, restore_best_weights=True, verbose=1),
+            ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, min_lr=1e-6, verbose=1),
+            ModelCheckpoint(model_path, monitor='val_accuracy', save_best_only=True, verbose=1),
+        ]
+        class_weights = class_weight.compute_class_weight(
+            'balanced', classes=np.unique(y_train), y=y_train
+        )
+        cw = dict(enumerate(class_weights))
+        model.fit(
+            X_train, y_train,
+            validation_data=(X_test, y_test),
+            epochs=epochs,
+            batch_size=16,
+            callbacks=callbacks,
+            class_weight=cw,
+            verbose=1,
+        )
+        _, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
+        classes_path = model_path.replace('.h5', '_classes.pkl')
+        with open(classes_path, 'wb') as f:
+            pickle.dump(gesture_classes, f)
+        print(f"✅ LSTM saved to {model_path} accuracy={test_accuracy*100:.2f}%")
+        return test_accuracy
     
     def _train_enhanced_cnn(self, X_train, X_test, y_train, y_test, model_path, epochs):
         """

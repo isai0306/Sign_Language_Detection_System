@@ -161,6 +161,74 @@ class HandDetector:
         
         return (x_min, y_min, x_max, y_max)
     
+    def draw_signai_overlay(self, frame, results, hand_predictions=None):
+        """
+        Draw dynamic colored bounding boxes, red joint points, white bone lines, and labels
+        (matches SignAI reference visualization style).
+        """
+        if not results.multi_hand_landmarks:
+            return frame
+            
+        h, w = frame.shape[:2]
+        hand_predictions = hand_predictions or []
+        
+        # Color palette for gestures to make it look premium
+        colors = {
+            'HELLO': (0, 0, 255),       # Red
+            'THANK_YOU': (0, 255, 0),   # Green
+            'YES': (255, 255, 0),       # Cyan
+            'NO': (0, 165, 255),        # Orange
+            'HELP': (0, 0, 255),        # Red (priority)
+            'WATER': (255, 0, 0),       # Blue
+            'FOOD': (200, 100, 250),    # Violet
+            'PLEASE': (255, 191, 0),    # Deep Sky Blue
+            'UNKNOWN': (128, 128, 128)  # Gray
+        }
+        
+        for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
+            bbox = self.calculate_bounding_box(hand_landmarks, w, h)
+            x_min, y_min, x_max, y_max = bbox
+            
+            p = hand_predictions[idx] if idx < len(hand_predictions) and hand_predictions[idx] else {}
+            g = p.get("gesture") or "UNKNOWN"
+            c = p.get("confidence") or 0
+            
+            box_color = colors.get(g.upper(), (0, 255, 0)) # Default green
+            
+            # Thick bounding box
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), box_color, 2)
+            
+            # Draw bones
+            pts = []
+            for lm in hand_landmarks.landmark:
+                px, py = int(lm.x * w), int(lm.y * h)
+                pts.append((px, py))
+            for connection in self.mp_hands.HAND_CONNECTIONS:
+                a, b = connection
+                cv2.line(frame, pts[a], pts[b], (255, 255, 255), 2, cv2.LINE_AA)
+            
+            # Draw joints
+            for pi in pts:
+                cv2.circle(frame, pi, 4, (0, 0, 255), -1, cv2.LINE_AA)
+                
+            label = "Hand"
+            if g and g != "UNKNOWN":
+                # Convert 'HELLO' -> 'Hello'
+                display_g = g.replace('_', ' ').title()
+                label = f"{display_g}: {int(c * 100)}%"
+            else:
+                label = "..."
+                
+            (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+            ly = max(y_min - 8, th + 6)
+            
+            # Label background box
+            cv2.rectangle(frame, (x_min, ly - th - 6), (x_min + tw + 10, ly + 4), box_color, -1)
+            # Label text (black for contrast)
+            cv2.putText(frame, label, (x_min + 5, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2, cv2.LINE_AA)
+            
+        return frame
+
     def draw_bounding_box(self, frame, bbox, label="Hand"):
         """
         Draw bounding box on frame

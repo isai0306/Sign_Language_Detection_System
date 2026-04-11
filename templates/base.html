@@ -17,23 +17,33 @@
         }
 
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --accent: #22c55e;
-            --danger: #f97316;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --accent: #10b981;
+            --danger: #ef4444;
             --warning: #f59e0b;
             --success: #10b981;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --bg-light: #f8fafc;
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --border-soft: rgba(0, 0, 0, 0.1);
+            
+            /* Dark Theme Colors */
+            --bg-page: #0b0f19;
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-mid: #0f172a;
+            --bg-gradient-end: #020617;
+            
+            --text-dark: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            /* Glassmorphism */
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-card: rgba(30, 41, 59, 0.6);
+            --border-soft: rgba(255, 255, 255, 0.1);
         }
 
         body {
             font-family: "Inter", system-ui, sans-serif;
             color: var(--text-dark);
-            background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%);
+            background-attachment: fixed;
             min-height: 100vh;
             line-height: 1.6;
         }
@@ -41,9 +51,10 @@
         /* Navigation */
         .navbar {
             background: var(--glass-bg);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
             padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 0 var(--border-soft), 0 8px 24px rgba(15, 23, 42, 0.06);
+            border-bottom: 1px solid var(--border-soft);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -61,6 +72,7 @@
             font-size: 1.5rem;
             font-weight: 800;
             color: var(--primary);
+            letter-spacing: -0.02em;
         }
 
         .nav-links {
@@ -80,6 +92,11 @@
             color: var(--primary);
         }
 
+        .nav-links span:not(.btn) {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
         .btn {
             padding: 0.6rem 1.2rem;
             border-radius: 8px;
@@ -92,17 +109,17 @@
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
+            color: #fff;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+            box-shadow: 0 8px 20px rgba(37,99,235,0.35);
         }
 
         .btn-danger {
             background: var(--danger);
-            color: white;
+            color: #fff;
         }
 
         /* Flash Messages */
@@ -134,25 +151,25 @@
         }
 
         .alert-success {
-            background: #d1fae5;
+            background: #ecfdf5;
             color: #065f46;
             border-left: 4px solid var(--success);
         }
 
         .alert-error {
-            background: #fee2e2;
+            background: #fef2f2;
             color: #991b1b;
             border-left: 4px solid var(--danger);
         }
 
         .alert-warning {
-            background: #fef3c7;
+            background: #fffbeb;
             color: #92400e;
             border-left: 4px solid var(--warning);
         }
 
         .alert-info {
-            background: #dbeafe;
+            background: #eff6ff;
             color: #1e40af;
             border-left: 4px solid var(--primary);
         }
@@ -174,7 +191,7 @@
         }
 
         .footer a {
-            color: var(--accent);
+            color: #6ee7b7;
             text-decoration: none;
         }
 

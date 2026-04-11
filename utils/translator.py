@@ -3,6 +3,8 @@ SignAI - Translation Module
 English to Tamil/Hindi translation
 """
 
+from collections import OrderedDict
+
 try:
     from googletrans import Translator as GoogleTranslator
     GOOGLETRANS_AVAILABLE = True
@@ -16,12 +18,14 @@ class Translator:
     Translation service for converting English text to Indian languages
     """
     
-    def __init__(self):
+    def __init__(self, cache_max: int = 512):
         """Initialize translator"""
         if GOOGLETRANS_AVAILABLE:
             self.translator = GoogleTranslator()
         else:
             self.translator = None
+        self._cache_max = cache_max
+        self._cache: "OrderedDict[tuple, str]" = OrderedDict()
         
         # Fallback dictionary for common gestures
         self.fallback_translations = {
@@ -126,22 +130,36 @@ class Translator:
             return ""
         
         text = text.strip().upper()
+        cache_key = (text, target_language)
+        if cache_key in self._cache:
+            self._cache.move_to_end(cache_key)
+            return self._cache[cache_key]
         
         # Check fallback dictionary first
         if text in self.fallback_translations:
-            return self.fallback_translations[text][target_language]
+            out = self.fallback_translations[text][target_language]
+            self._cache_store(cache_key, out)
+            return out
         
         # Try Google Translate
         if GOOGLETRANS_AVAILABLE and self.translator:
             try:
                 lang_code = 'ta' if target_language == 'tamil' else 'hi'
                 result = self.translator.translate(text, src='en', dest=lang_code)
-                return result.text
+                out = result.text
+                self._cache_store(cache_key, out)
+                return out
             except Exception as e:
                 print(f"Translation error: {e}")
                 return self._get_fallback_message(target_language)
         else:
             return self._get_fallback_message(target_language)
+
+    def _cache_store(self, key, value: str) -> None:
+        self._cache[key] = value
+        self._cache.move_to_end(key)
+        while len(self._cache) > self._cache_max:
+            self._cache.popitem(last=False)
     
     def _get_fallback_message(self, language):
         """Return fallback message when translation fails"""

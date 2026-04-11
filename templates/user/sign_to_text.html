@@ -1,720 +1,304 @@
 {% extends "base.html" %}
-
-{% block title %}Sign to Text - SignAI{% endblock %}
+{% block title %}Sign to Text — SignAI{% endblock %}
 
 {% block extra_css %}
 <style>
-:root {
-  --primary: #2563eb;
-  --accent: #22c55e;
-  --danger: #f97316;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-}
+.signai-page { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.signai-page h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.35rem; }
+.signai-page .sub { color: var(--text-muted); margin-bottom: 1.5rem; }
 
-.detection-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.page-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  color: var(--primary);
-  margin-bottom: 0.5rem;
-}
-
-.page-header p {
-  font-size: 1.1rem;
-  color: #64748b;
-}
-
-.detection-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-/* ================= VIDEO SECTION ================= */
-.video-section {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 20px;
-  border: 1px solid rgba(0,0,0,0.1);
-}
-
-.video-container {
-  position: relative;
-  background: #000;
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-}
-
-#videoElement {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.video-overlay {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  right: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.status-indicator {
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  backdrop-filter: blur(10px);
-}
-
-.status-active {
-  background: rgba(34, 197, 94, 0.9);
-  color: white;
-}
-
-.status-inactive {
-  background: rgba(148, 163, 184, 0.9);
-  color: white;
-}
-
-.status-emergency {
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.video-controls {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.control-btn {
-  padding: 0.9rem 2rem;
-  border: none;
+.emergency-strip {
+  display: none;
+  align-items: center; justify-content: center; gap: 0.75rem;
+  padding: 0.85rem 1rem; margin-bottom: 1rem;
   border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  background: linear-gradient(90deg, #fee2e2, #fecaca);
+  border: 1px solid #f87171;
+  color: #991b1b; font-weight: 700;
+  animation: emg 1.2s ease-in-out infinite;
 }
+.emergency-strip.on { display: flex; }
+@keyframes emg { 0%,100%{opacity:1;} 50%{opacity:0.85;} }
 
-.btn-start {
-  background: linear-gradient(135deg, var(--primary), #1e40af);
-  color: white;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
-}
+.grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.25rem; }
+@media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
 
-.btn-start:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4);
-}
-
-.btn-stop {
-  background: var(--danger);
-  color: white;
-}
-
-.btn-stop:hover {
-  background: #ea580c;
-}
-
-.btn-stop:disabled,
-.btn-start:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ================= RESULTS SECTION ================= */
-.results-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.result-card {
+.glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.1);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
 }
 
-.result-card h3 {
-  font-size: 1.2rem;
-  color: var(--primary);
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.video-wrap {
+  position: relative; border-radius: 16px; overflow: hidden;
+  background: #020617; border: 1px solid var(--border-soft);
+  aspect-ratio: 4/3; max-height: 520px;
 }
+#videoElement { width: 100%; height: 100%; object-fit: cover; display: block; }
+#overlayPreview {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none; opacity: 0; transition: opacity 0.35s ease;
+}
+#overlayPreview.on { opacity: 1; }
 
-.detected-gesture {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--primary);
-  text-align: center;
-  padding: 1.5rem;
-  background: rgba(37, 99, 235, 0.1);
-  border-radius: 12px;
-  margin-bottom: 1rem;
+.controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+.btn-pill {
+  border: none; border-radius: 999px; padding: 0.65rem 1.35rem; font-weight: 600; cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s;
 }
+.btn-pill:active { transform: scale(0.98); }
+.btn-go { background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #0f172a; box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
+.btn-stop { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
 
-.confidence-bar {
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
+.pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 999px;
+  font-size: 0.8rem; font-weight: 600; background: rgba(148,163,184,0.15); color: var(--text-muted); border: 1px solid var(--border-soft); }
 
-.confidence-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--primary));
-  transition: width 0.5s ease;
-  border-radius: 10px;
-}
+.metric { font-size: 2rem; font-weight: 800; color: var(--text-dark); line-height: 1.1; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+.submetric { color: var(--primary); font-size: 0.9rem; margin-top: 0.25rem; font-weight: 600; }
 
-.confidence-text {
-  font-size: 0.9rem;
-  color: #64748b;
-  text-align: right;
-}
+.bar { height: 8px; border-radius: 999px; background: rgba(148,163,184,0.2); overflow: hidden; margin-top: 0.75rem; }
+.bar > i { display: block; height: 100%; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg, #34d399, #38bdf8); transition: width 0.4s ease; }
 
-.translation-box {
-  padding: 1.2rem;
-  background: rgba(37, 99, 235, 0.05);
-  border-radius: 10px;
-  border-left: 4px solid var(--primary);
-  margin-bottom: 1rem;
+.lang-row { display: grid; gap: 0.65rem; margin-top: 1rem; }
+.lang-card {
+  padding: 0.75rem 1rem; border-radius: 12px;
+  background: var(--glass-card); border: 1px solid var(--border-soft);
 }
+.lang-card span { font-size: 0.75rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.lang-card p { margin-top: 0.35rem; font-size: 1.15rem; font-weight: 600; color: var(--text-dark); }
 
-.translation-label {
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
+.audio-row { margin-top: 1rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #64748b; }
+.dot.on { background: #34d399; box-shadow: 0 0 12px rgba(52,211,153,0.7); }
 
-.translation-text {
-  font-size: 1.8rem;
-  color: var(--primary);
-  font-weight: 700;
+#emergencyModal {
+  position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center;
+  padding: 1rem; background: rgba(2,6,23,0.72); backdrop-filter: blur(8px);
 }
-
-.audio-control {
-  text-align: center;
-  padding: 1rem;
+#emergencyModal.on { display: flex; }
+.emg-card {
+  max-width: 420px; text-align: center; padding: 2rem; border-radius: 20px;
+  background: linear-gradient(160deg, rgba(127,29,29,0.95), rgba(30,27,75,0.98));
+  border: 1px solid rgba(248,113,113,0.45);
+  color: #fecaca; animation: pop 0.35s ease;
 }
-
-.play-audio-btn {
-  padding: 0.8rem 1.5rem;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.play-audio-btn:hover {
-  background: #16a34a;
-  transform: scale(1.05);
-}
-
-.play-audio-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ================= EMERGENCY ALERT ================= */
-.emergency-alert {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(239, 68, 68, 0.95);
-  backdrop-filter: blur(20px);
-  color: white;
-  padding: 3rem;
-  border-radius: 20px;
-  text-align: center;
-  z-index: 1000;
-  box-shadow: 0 30px 70px rgba(0,0,0,0.5);
-  display: none;
-  animation: emergencyPulse 1.5s infinite;
-}
-
-@keyframes emergencyPulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.05); }
-}
-
-.emergency-alert.active {
-  display: block;
-}
-
-.emergency-alert h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.emergency-alert .icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-}
-
-.emergency-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 999;
-  display: none;
-}
-
-.emergency-backdrop.active {
-  display: block;
-}
-
-/* ================= LOADING ================= */
-.loading-indicator {
-  text-align: center;
-  padding: 2rem;
-  color: #94a3b8;
-  display: none;
-}
-
-.loading-indicator.active {
-  display: block;
-}
-
-.spinner {
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid var(--primary);
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 1024px) {
-  .detection-layout {
-    grid-template-columns: 1fr;
-  }
-}
+@keyframes pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="detection-container">
-  <div class="page-header">
-    <h1>🎥 Sign Language Detection</h1>
-    <p>Show sign language gestures to the camera for real-time translation</p>
-  </div>
+<div class="signai-page" data-user-id="{{ session.user_id }}">
+  <h1>Live sign recognition</h1>
+  <p class="sub">MediaPipe landmarks, temporal smoothing, and sentence-aware output — styled like the SignAI reference overlay.</p>
 
-  <div class="detection-layout">
-    <!-- Video Section -->
-    <div class="video-section">
-      <div class="video-container">
-        <video id="videoElement" autoplay playsinline></video>
-        
-        <div class="video-overlay">
-          <div id="statusIndicator" class="status-indicator status-inactive">
-            ⚫ Camera Inactive
-          </div>
-        </div>
+  <div id="emergencyStrip" class="emergency-strip">High-priority gesture — emergency channel notified</div>
+
+  <div class="grid">
+    <div class="glass">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+        <span class="pill" id="camPill">Camera off</span>
+        <span class="pill" id="modelPill">Model: …</span>
       </div>
-
-      <div class="video-controls">
-        <button id="startBtn" class="control-btn btn-start">
-          ▶️ Start Detection
-        </button>
-        <button id="stopBtn" class="control-btn btn-stop" disabled>
-          ⏹️ Stop Detection
-        </button>
+      <div class="video-wrap">
+        <video id="videoElement" playsinline autoplay muted></video>
+        <img id="overlayPreview" alt="" />
       </div>
-
-      <div id="loadingIndicator" class="loading-indicator">
-        <div class="spinner"></div>
-        <p>Processing gesture...</p>
+      <div class="controls">
+        <button type="button" class="btn-pill btn-go" id="startBtn">Start camera</button>
+        <button type="button" class="btn-pill btn-stop" id="stopBtn" disabled>Stop</button>
       </div>
     </div>
 
-    <!-- Results Section -->
-    <div class="results-section">
-      <!-- Detected Gesture -->
-      <div class="result-card">
-        <h3>🎯 Detected Gesture</h3>
-        <div id="detectedGesture" class="detected-gesture">
-          ---
+    <div class="glass" style="display:flex;flex-direction:column;gap:1rem;">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="submetric">Detected gesture</div>
+            <div class="metric" id="gestureOut">—</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="submetric">Confidence</div>
+            <div class="metric" id="confOut" style="font-size:1.35rem;">0%</div>
+          </div>
         </div>
-        
-        <div class="confidence-bar">
-          <div id="confidenceBar" class="confidence-fill" style="width: 0%"></div>
-        </div>
-        <div id="confidenceText" class="confidence-text">Confidence: 0%</div>
+        <div class="bar"><i id="confBar"></i></div>
       </div>
 
-      <!-- Translations -->
-      <div class="result-card">
-        <h3>🌐 Translations</h3>
-        
-        <div class="translation-box">
-          <div class="translation-label">தமிழ் (Tamil)</div>
-          <div id="tamilTranslation" class="translation-text">---</div>
-        </div>
+      <div>
+        <div class="submetric">Sentence (context)</div>
+        <p id="sentenceOut" style="font-size:1.1rem;font-weight:600;margin-top:0.35rem;color:var(--text-dark); text-shadow: 0 0 5px rgba(255,255,255,0.1);">—</p>
+      </div>
 
-        <div class="translation-box">
-          <div class="translation-label">हिंदी (Hindi)</div>
-          <div id="hindiTranslation" class="translation-text">---</div>
-        </div>
-
-        <div class="audio-control">
-          <button id="playAudioBtn" class="play-audio-btn" disabled>
-            🔊 Play Audio
-          </button>
-        </div>
-        <h3>🔊 Audio Test</h3>
-        <button onclick="testAudio()" class="play-audio-btn">
-          Test Audio Generation
-        </button>
-        <div id="audioTestResult" style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; display: none;">
-          <pre id="audioTestOutput" style="margin: 0; font-size: 0.85rem;"></pre>
+      <div>
+        <div class="submetric">Translations</div>
+        <div class="lang-row">
+          <div class="lang-card"><span>Tamil</span><p id="taOut">—</p></div>
+          <div class="lang-card"><span>Hindi</span><p id="hiOut">—</p></div>
         </div>
       </div>
 
-      <!-- Language Preference Info -->
-      <div class="result-card">
-        <h3>⚙️ Current Settings</h3>
-        <p style="color: #64748b; margin-bottom: 0.5rem;">
-          <strong>Preferred Language:</strong> 
-          <span style="color: var(--primary);">{{ language_pref.preferred_language if language_pref else 'TAMIL' }}</span>
-        </p>
-        <p style="color: #64748b;">
-          <strong>Audio Output:</strong> 
-          <span style="color: var(--accent);">{{ 'Enabled ✓' if language_pref and language_pref.audio_enabled else 'Disabled ✗' }}</span>
-        </p>
+      <div class="audio-row">
+        <span class="dot" id="audioDot"></span>
+        <span class="submetric" id="audioLabel">Audio idle</span>
+        <button type="button" class="btn-pill btn-go" id="playBtn" disabled style="margin-left:auto;">Play TTS</button>
+      </div>
+
+      <div style="margin-top:auto;padding-top:0.5rem;font-size:0.85rem;color:var(--text-muted);">
+        Preferences: {{ language_pref.preferred_language if language_pref else 'TAMIL' }}
+        · Audio {{ 'on' if language_pref and language_pref.audio_enabled else 'off' }}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Emergency Alert -->
-<div id="emergencyBackdrop" class="emergency-backdrop"></div>
-<div id="emergencyAlert" class="emergency-alert">
-  <div class="icon">🚨</div>
-  <h2>EMERGENCY DETECTED!</h2>
-  <p style="font-size: 1.2rem; margin-bottom: 1rem;">
-    Emergency gesture detected. Alerts have been sent to emergency contacts.
-  </p>
-  <button onclick="closeEmergencyAlert()" style="padding: 0.8rem 2rem; background: white; color: var(--danger); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem;">
-    Acknowledge
-  </button>
+<div id="emergencyModal">
+  <div class="emg-card">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem;">!</div>
+    <h2 style="margin-bottom:0.5rem;">Emergency gesture</h2>
+    <p style="opacity:0.9;margin-bottom:1.25rem;">Logged for responders. If this was a mistake, dismiss below.</p>
+    <button type="button" class="btn-pill btn-go" id="dismissEmg">Acknowledge</button>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// DOM Elements
-const video = document.getElementById('videoElement');
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const statusIndicator = document.getElementById('statusIndicator');
-const loadingIndicator = document.getElementById('loadingIndicator');
-const detectedGesture = document.getElementById('detectedGesture');
-const confidenceBar = document.getElementById('confidenceBar');
-const confidenceText = document.getElementById('confidenceText');
-const tamilTranslation = document.getElementById('tamilTranslation');
-const hindiTranslation = document.getElementById('hindiTranslation');
-const playAudioBtn = document.getElementById('playAudioBtn');
-const emergencyAlert = document.getElementById('emergencyAlert');
-const emergencyBackdrop = document.getElementById('emergencyBackdrop');
+(() => {
+  const video = document.getElementById('videoElement');
+  const overlay = document.getElementById('overlayPreview');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const camPill = document.getElementById('camPill');
+  const modelPill = document.getElementById('modelPill');
+  const gestureOut = document.getElementById('gestureOut');
+  const confOut = document.getElementById('confOut');
+  const confBar = document.getElementById('confBar');
+  const sentenceOut = document.getElementById('sentenceOut');
+  const taOut = document.getElementById('taOut');
+  const hiOut = document.getElementById('hiOut');
+  const playBtn = document.getElementById('playBtn');
+  const audioDot = document.getElementById('audioDot');
+  const audioLabel = document.getElementById('audioLabel');
+  const emergencyStrip = document.getElementById('emergencyStrip');
+  const emergencyModal = document.getElementById('emergencyModal');
+  const dismissEmg = document.getElementById('dismissEmg');
 
-let stream = null;
-let detectionInterval = null;
-let currentAudioPath = null;
-let audioElement = null; // Store audio element
+  let stream = null;
+  let timer = null;
+  let canvas = document.createElement('canvas');
+  let ctx = canvas.getContext('2d');
+  let lastAudio = null;
+  let audioEl = null;
+  let lastSpokenGesture = null;
 
-// Start Camera
-startBtn.addEventListener('click', async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'user' } 
-    });
-    video.srcObject = stream;
-    
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
-    
-    statusIndicator.textContent = '🟢 Camera Active';
-    statusIndicator.className = 'status-indicator status-active';
-    
-    // Start detection loop
-    detectionInterval = setInterval(detectGesture, 1500);
-  } catch (error) {
-    alert('Camera access denied. Please allow camera permissions.');
-    console.error('Camera error:', error);
+  fetch('/api/system-info').then(r => r.json()).then(d => {
+    if (d.success) modelPill.textContent = 'Model: ' + (d.model.type || 'n/a');
+  }).catch(() => {});
+
+  function setAudioPlaying(on) {
+    audioDot.classList.toggle('on', on);
+    audioLabel.textContent = on ? 'Playing audio…' : (lastAudio ? 'Audio ready' : 'Audio idle');
   }
-});
 
-// Stop Camera
-stopBtn.addEventListener('click', () => {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+  startBtn.addEventListener('click', async () => {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 960 }, height: { ideal: 720 }, facingMode: 'user' },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      camPill.textContent = 'Camera live';
+      if (!timer) timer = setInterval(tick, 480);
+    } catch (e) {
+      alert('Camera permission is required for live recognition.');
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (timer) { clearInterval(timer); timer = null; }
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
     video.srcObject = null;
-  }
-  
-  if (detectionInterval) {
-    clearInterval(detectionInterval);
-  }
-  
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-  
-  statusIndicator.textContent = '⚫ Camera Inactive';
-  statusIndicator.className = 'status-indicator status-inactive';
-});
+    overlay.classList.remove('on');
+    overlay.removeAttribute('src');
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    camPill.textContent = 'Camera off';
+  });
 
-// Detect Gesture
-async function detectGesture() {
-  if (!stream) return;
-  
-  loadingIndicator.classList.add('active');
-  
-  try {
-    // Capture frame from video
-    const canvas = document.createElement('canvas');
+  async function tick() {
+    if (!stream || !video.videoWidth) return;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    const frameData = canvas.toDataURL('image/jpeg');
-    
-    // Send to API
-    const response = await fetch('/api/detect-gesture', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        frame: frameData,
-        user_id: {{ session.user_id }}
-      })
-    });
-    
-    const result = await response.json();
-    console.log('Detection result:', result); // Debug log
-    
-    if (result.success && result.gesture) {
-      updateResults(result);
-      
-      // Check for emergency
-      if (result.is_emergency) {
-        handleEmergency(result.gesture);
-      }
-    }
-  } catch (error) {
-    console.error('Detection error:', error);
-  } finally {
-    loadingIndicator.classList.remove('active');
-  }
-}
-
-// Update Results
-function updateResults(result) {
-  detectedGesture.textContent = result.gesture;
-  
-  const confidence = Math.round(result.confidence * 100);
-  confidenceBar.style.width = confidence + '%';
-  confidenceText.textContent = `Confidence: ${confidence}%`;
-  
-  tamilTranslation.textContent = result.translations.tamil || '---';
-  hindiTranslation.textContent = result.translations.hindi || '---';
-  
-  // Handle audio - FIXED VERSION
-  console.log('Audio paths received:', result.audio_paths); // Debug log
-  
-  if (result.audio_paths && Object.keys(result.audio_paths).length > 0) {
-    // Get first available audio path
-    const audioPath = Object.values(result.audio_paths)[0];
-    console.log('Using audio path:', audioPath); // Debug log
-    
-    // Store the path with /static/ prefix
-    currentAudioPath = `/static/${audioPath}`;
-    playAudioBtn.disabled = false;
-    
-    // Auto-play audio if enabled
-    playAudio();
-  } else {
-    console.log('No audio paths available');
-    playAudioBtn.disabled = true;
-  }
-}
-
-// Play Audio - FIXED VERSION
-function playAudio() {
-  if (!currentAudioPath) {
-    console.log('No audio path available');
-    return;
-  }
-  
-  console.log('Attempting to play audio from:', currentAudioPath);
-  
-  // Stop previous audio if playing
-  if (audioElement) {
-    audioElement.pause();
-    audioElement = null;
-  }
-  
-  // Create new audio element
-  audioElement = new Audio(currentAudioPath);
-  
-  // Add event listeners for debugging
-  audioElement.addEventListener('loadeddata', () => {
-    console.log('✅ Audio loaded successfully');
-  });
-  
-  audioElement.addEventListener('error', (e) => {
-    console.error('❌ Audio error:', e);
-    console.error('Failed path:', currentAudioPath);
-    alert('Audio playback failed. File might not exist or path is incorrect.');
-  });
-  
-  audioElement.addEventListener('ended', () => {
-    console.log('Audio playback completed');
-  });
-  
-  // Play the audio
-  audioElement.play()
-    .then(() => {
-      console.log('✅ Audio playing');
-    })
-    .catch(err => {
-      console.error('❌ Playback failed:', err);
-      // Try alternative method
-      const audioUrl = currentAudioPath + '?t=' + Date.now(); // Cache busting
-      console.log('Retrying with cache-busted URL:', audioUrl);
-      
-      const retryAudio = new Audio(audioUrl);
-      retryAudio.play().catch(retryErr => {
-        console.error('❌ Retry also failed:', retryErr);
-        alert('Could not play audio. Please check browser console for details.');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const frame = canvas.toDataURL('image/jpeg', 0.82);
+    try {
+      const res = await fetch('/api/detect-gesture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame, user_id: {{ session.user_id|tojson }} })
       });
-    });
-}
+      const data = await res.json();
+      if (!data.success) return;
+      if (data.annotated_frame) {
+        overlay.src = data.annotated_frame;
+        overlay.classList.add('on');
+      }
+      if (data.is_emergency) {
+        emergencyStrip.classList.add('on');
+        emergencyModal.classList.add('on');
+      } else {
+        emergencyStrip.classList.remove('on');
+      }
+      if (data.gesture) {
+        gestureOut.textContent = data.gesture.replace(/_/g, ' ');
+        const p = Math.round((data.confidence || 0) * 100);
+        confOut.textContent = p + '%';
+        confBar.style.width = p + '%';
+      }
+      sentenceOut.textContent = data.sentence || data.display_text || '—';
+      if (data.translations) {
+        taOut.textContent = data.translations.tamil || '—';
+        hiOut.textContent = data.translations.hindi || '—';
+      }
+      if (data.audio_paths && Object.keys(data.audio_paths).length) {
+        const p = Object.values(data.audio_paths)[0];
+        lastAudio = '/static/' + p;
+        playBtn.disabled = false;
+        audioLabel.textContent = 'Audio ready';
+        if (data.gesture && data.gesture !== lastSpokenGesture) {
+          lastSpokenGesture = data.gesture;
+          const a = new Audio(lastAudio);
+          a.onplay = () => setAudioPlaying(true);
+          a.onended = () => setAudioPlaying(false);
+          a.play().catch(() => {});
+          audioEl = a;
+        }
+      }
+    } catch (e) { console.warn(e); }
+  }
 
-// Manual play button
-playAudioBtn.addEventListener('click', playAudio);
-
-// Handle Emergency
-function handleEmergency(gestureName) {
-  emergencyAlert.classList.add('active');
-  emergencyBackdrop.classList.add('active');
-  
-  statusIndicator.textContent = '🚨 EMERGENCY!';
-  statusIndicator.className = 'status-indicator status-emergency';
-  
-  // Send emergency alert
-  fetch('/api/emergency-alert', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      user_id: {{ session.user_id }},
-      gesture_name: gestureName
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Emergency alert response:', data);
-  })
-  .catch(error => {
-    console.error('Emergency alert error:', error);
+  playBtn.addEventListener('click', () => {
+    if (!lastAudio) return;
+    if (audioEl) { audioEl.pause(); }
+    audioEl = new Audio(lastAudio + '?t=' + Date.now());
+    audioEl.onplay = () => setAudioPlaying(true);
+    audioEl.onended = () => setAudioPlaying(false);
+    audioEl.play().catch(() => {});
   });
-}
 
-// Close Emergency Alert
-function closeEmergencyAlert() {
-  emergencyAlert.classList.remove('active');
-  emergencyBackdrop.classList.remove('active');
-  
-  statusIndicator.textContent = '🟢 Camera Active';
-  statusIndicator.className = 'status-indicator status-active';
-}
+  dismissEmg.addEventListener('click', () => {
+    emergencyModal.classList.remove('on');
+    emergencyStrip.classList.remove('on');
+  });
 
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-  }
-  if (detectionInterval) {
-    clearInterval(detectionInterval);
-  }
-  if (audioElement) {
-    audioElement.pause();
-  }
-});
-
-// Test audio path on page load (for debugging)
-console.log('Page loaded. Testing audio system...');
-console.log('User ID:', {{ session.user_id }});
-
-async function testAudio() {
-  const resultDiv = document.getElementById('audioTestResult');
-  const outputPre = document.getElementById('audioTestOutput');
-  
-  resultDiv.style.display = 'block';
-  outputPre.textContent = 'Testing audio generation...';
-  
-  try {
-    const response = await fetch('/api/test-audio');
-    const result = await response.json();
-    
-    outputPre.textContent = JSON.stringify(result, null, 2);
-    
-    if (result.success && result.audio_path) {
-      // Try to play the test audio
-      const audio = new Audio(result.audio_path);
-      audio.play()
-        .then(() => {
-          outputPre.textContent += '\n\n✅ Audio playback successful!';
-        })
-        .catch(err => {
-          outputPre.textContent += '\n\n❌ Playback failed: ' + err.message;
-        });
-    }
-  } catch (error) {
-    outputPre.textContent = 'Error: ' + error.message;
-  }
-}
+  window.addEventListener('beforeunload', () => stopBtn.click());
+})();
 </script>
 {% endblock %}

@@ -253,12 +253,13 @@ def edit_gesture(gesture_id):
         image_path = request.form.get('image_path', '').strip()
         
         try:
+            is_emergency = 1 if request.form.get("is_emergency") == "on" else 0
             cursor.execute("""
                 UPDATE gestures
                 SET gesture_name = %s, description = %s,
-                    image_path = %s, category = %s
+                    image_path = %s, category = %s, is_emergency = %s
                 WHERE id = %s
-            """, (gesture_name, description, image_path, category, gesture_id))
+            """, (gesture_name, description, image_path, category, is_emergency, gesture_id))
             
             conn.commit()
             flash(f'Gesture "{gesture_name}" updated!', 'success')
@@ -325,6 +326,8 @@ def training_redirect():
 @admin_required
 def analytics():
     """System analytics"""
+    usage_chart = []
+    emergency_trends = []
     try:
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
@@ -338,6 +341,11 @@ def analytics():
             ORDER BY date
         """)
         daily_usage = cursor.fetchall()
+        usage_chart = []
+        for row in daily_usage:
+            dt = row["date"]
+            label = dt.strftime("%m/%d") if hasattr(dt, "strftime") else str(dt)
+            usage_chart.append({"day": label, "count": int(row["count"])})
         
         # Category distribution
         cursor.execute("""
@@ -355,14 +363,31 @@ def analytics():
             GROUP BY preferred_language
         """)
         language_stats = cursor.fetchall()
+
+        try:
+            cursor.execute("""
+                SELECT DATE(created_at) AS date, COUNT(*) AS count
+                FROM emergency_logs
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date
+            """)
+            for row in cursor.fetchall():
+                emergency_trends.append(
+                    {"date": row["date"], "count": row["count"]}
+                )
+        except mysql.connector.Error:
+            emergency_trends = []
         
         cursor.close()
         conn.close()
         
         return render_template('admin/analytics.html',
             daily_usage=daily_usage,
+            usage_chart=usage_chart,
             category_stats=category_stats,
-            language_stats=language_stats
+            language_stats=language_stats,
+            emergency_trends=emergency_trends,
         )
         
     except mysql.connector.Error as e:

@@ -19,13 +19,14 @@ class Config:
     # ============================
     # DATABASE SETTINGS (MySQL)
     # ============================
+    # Override with env if MySQL uses a password: set SIGNAI_DB_PASSWORD
     DB_CONFIG = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': '',  # WAMP default
-        'database': 'signai_db',
+        'host': os.environ.get('SIGNAI_DB_HOST', 'localhost'),
+        'user': os.environ.get('SIGNAI_DB_USER', 'root'),
+        'password': os.environ.get('SIGNAI_DB_PASSWORD', os.environ.get('MYSQL_PASSWORD', '')),
+        'database': os.environ.get('SIGNAI_DB_NAME', 'signai_db'),
         'charset': 'utf8',
-        'autocommit': True
+        'autocommit': True,
     }
     
     # ============================
@@ -47,7 +48,13 @@ class Config:
     # AI MODEL SETTINGS
     # ============================
     MODEL_PATH = 'static/models/gesture_model.h5'
-    CONFIDENCE_THRESHOLD = 0.75  # Minimum confidence for gesture detection
+    CONFIDENCE_THRESHOLD = 0.85  # Minimum confidence for gesture detection
+    SEQUENCE_LENGTH = 25  # Frames for LSTM / temporal context
+    VOTE_WINDOW = 15  # Majority voting over last N predictions
+    FRAME_PROCESS_INTERVAL = 2  # Process every Nth request per user (server-side skip)
+    EMERGENCY_COOLDOWN_SEC = 45.0
+    TRANSLATION_CACHE_MAX = 512
+    LSTM_EPOCHS_DEFAULT = 80
     
     # ============================
     # LANGUAGE SETTINGS
