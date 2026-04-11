@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ================= VARIABLES ================= */
+:root {
+  --primary: #2563eb;
+  --accent: #22c55e;
+  --danger: #f97316;
+  --warning: #f59e0b;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --border-soft: rgba(0, 0, 0, 0.1);
+}
+
+/* ================= DASHBOARD LAYOUT ================= */
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.welcome-section {
+  background: linear-gradient(135deg, var(--primary), #1e40af);
+  color: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 50px rgba(37, 99, 235, 0.3);
+}
+
+.welcome-section h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-section p {
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+/* ================= STATS CARDS ================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.stat-card .stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card .stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 0.3rem;
+}
+
+.stat-card .stat-label {
+  font-size: 0.95rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ================= FEATURE CARDS ================= */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.feature-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.feature-card .feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.8rem;
+  color: var(--primary);
+}
+
+.feature-card p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.feature-btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary), #1e40af);
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.feature-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+}
+
+/* ================= RECENT ACTIVITY ================= */
+.activity-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  margin-bottom: 2rem;
+}
+
+.activity-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.activity-list {
+  list-style: none;
+}
+
+.activity-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+.activity-item:hover {
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 8px;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-info {
+  flex: 1;
+}
+
+.activity-gesture {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.activity-translation {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+}
+
+.activity-time {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.activity-confidence {
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: 1rem;
+}
+
+.confidence-high {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.confidence-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.confidence-low {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.no-activity {
+  text-align: center;
+  padding: 3rem;
+  color: #94a3b8;
+}
+
+.no-activity-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* ================= LANGUAGE PREFERENCE ================= */
+.preference-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+}
+
+.preference-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+
+.preference-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.preference-info .info-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.preference-info .info-value {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.change-preference-btn {
+  padding: 0.6rem 1.2rem;
+  background: white;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.change-preference-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .stats-grid,
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .activity-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  
+  .activity-confidence {
+    margin-left: 0;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <h1>Welcome back, {{ session.user_name }}! 👋</h1>
+    <p>Your intelligent sign language communication assistant is ready</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value">{{ gesture_stats.total_gestures or 0 }}</div>
+      <div class="stat-label">Total Gestures Detected</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-value">{{ text_stats.text_to_sign_count or 0 }}</div>
+      <div class="stat-label">Text to Sign Requests</div>
+    </div>
+  </div>
+
+  <!-- Feature Cards -->
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🎥</div>
+      <h3>Sign → Text → Audio</h3>
+      <p>Use your camera to convert sign language into text and spoken words in Tamil or Hindi</p>
+      <a href="{{ url_for('user.sign_to_text') }}" class="feature-btn">Start Detection</a>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">✍️</div>
+      <h3>Text → Sign Language</h3>
+      <p>Type your message and see it converted into sign language visuals</p>
+      <a href="{{ url_for('user.text_to_sign') }}" class="feature-btn">Convert Text</a>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>View History</h3>
+      <p>Access your complete gesture detection history</p>
+      <a href="{{ url_for('user.history') }}" class="feature-btn">View History</a>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="activity-section">
+    <h2>Recent Activity</h2>
+    
+    {% if recent_activity %}
+      <ul class="activity-list">
+        {% for activity in recent_activity %}
+          <li class="activity-item">
+            <div class="activity-info">
+              <div class="activity-gesture">
+                {{ activity.gesture_name }}
+              </div>
+              <div class="activity-translation">
+                Tamil: {{ activity.translated_text_tamil }} | Hindi: {{ activity.translated_text_hindi }}
+              </div>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+              <span class="activity-confidence {% if activity.confidence_score >= 0.8 %}confidence-high{% elif activity.confidence_score >= 0.6 %}confidence-medium{% else %}confidence-low{% endif %}">
+                {{ "%.0f"|format(activity.confidence_score * 100) }}% confidence
+              </span>
+              <span class="activity-time">
+                {{ activity.detection_timestamp.strftime('%b %d, %I:%M %p') }}
+              </span>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="no-activity">
+        <div class="no-activity-icon">📭</div>
+        <p>No recent activity. Start using the sign detection feature!</p>
+        <a href="{{ url_for('user.sign_to_text') }}" class="feature-btn" style="margin-top: 1rem;">Start Now</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Language Preference -->
+  <div class="preference-card">
+    <h2>Language Preferences</h2>
+    
+    {% if language_pref %}
+      <div class="preference-info">
+        <div>
+          <span class="info-label">Preferred Language:</span>
+          <span class="info-value">{{ language_pref.preferred_language }}</span>
+        </div>
+        <div style="margin-left: auto;">
+          <span class="info-label">Audio Output:</span>
+          <span class="info-value">{{ "Enabled" if language_pref.audio_enabled else "Disabled" }}</span>
+        </div>
+      </div>
+    {% endif %}
+    
+    <a href="{{ url_for('user.profile') }}" class="change-preference-btn">
+      Change Preferences
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh recent activity every 30 seconds
+setInterval(() => {
+  location.reload();
+}, 30000);
+</script>
+{% endblock %}

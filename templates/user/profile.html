@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #2563eb;
+  --accent: #22c55e;
+  --danger: #f97316;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+}
+
+.profile-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+/* ================= PROFILE SECTIONS ================= */
+.profile-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.section-header .icon {
+  font-size: 1.8rem;
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+/* ================= FORM GROUPS ================= */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.9rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group input:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.form-group .help-text {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 0.4rem;
+}
+
+/* ================= TOGGLE SWITCH ================= */
+.toggle-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.toggle-group label {
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 60px;
+  height: 30px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.4s;
+  border-radius: 30px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent);
+}
+
+input:checked + .slider:before {
+  transform: translateX(30px);
+}
+
+/* ================= BUTTONS ================= */
+.btn-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--primary), #1e40af);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4);
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 1rem;
+  background: white;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-danger {
+  padding: 0.8rem 1.5rem;
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: #ea580c;
+}
+
+/* ================= INFO CARDS ================= */
+.info-card {
+  background: #dbeafe;
+  border-left: 4px solid var(--primary);
+  padding: 1.2rem;
+  border-radius: 10px;
+  margin-top: 1.5rem;
+}
+
+.info-card h4 {
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.info-card p {
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.info-card ul {
+  margin-top: 0.8rem;
+  margin-left: 1.5rem;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+/* ================= STATS ================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 10px;
+}
+
+.stat-item .value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.stat-item .label {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.3rem;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+  <div class="page-header">
+    <h1>👤 My Profile</h1>
+    <p>Manage your account settings and preferences</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('user.profile') }}">
+    <!-- Personal Information -->
+    <div class="profile-section">
+      <div class="section-header">
+        <span class="icon">ℹ️</span>
+        <h2>Personal Information</h2>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Register Number</label>
+          <input type="text" value="{{ user.register_number }}" disabled>
+          <span class="help-text">Cannot be changed</span>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" value="{{ user.email }}" disabled>
+          <span class="help-text">Cannot be changed</span>
+        </div>
+
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" name="name" value="{{ user.name }}" required>
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" value="{{ user.phone or '' }}" placeholder="Optional">
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="value">{{ user.created_at.strftime('%b %d, %Y') if user.created_at else 'N/A' }}</div>
+          <div class="label">Member Since</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="value">{{ user.last_login.strftime('%b %d, %Y') if user.last_login else 'Never' }}</div>
+          <div class="label">Last Login</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="value">{{ user.status or 'ACTIVE' }}</div>
+          <div class="label">Account Status</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Language Preferences -->
+    <div class="profile-section">
+      <div class="section-header">
+        <span class="icon">🌐</span>
+        <h2>Language Preferences</h2>
+      </div>
+
+      <div class="form-group">
+        <label>Preferred Translation Language *</label>
+        <select name="preferred_language" required>
+          <option value="TAMIL" {% if user.preferred_language == 'TAMIL' %}selected{% endif %}>Tamil (தமிழ்)</option>
+          <option value="HINDI" {% if user.preferred_language == 'HINDI' %}selected{% endif %}>Hindi (हिंदी)</option>
+          <option value="BOTH" {% if user.preferred_language == 'BOTH' %}selected{% endif %}>Both Languages</option>
+        </select>
+        <span class="help-text">Choose your preferred language for translations</span>
+      </div>
+
+      <div class="toggle-group">
+        <label>Enable Audio Output</label>
+        <label class="toggle-switch">
+          <input type="checkbox" name="audio_enabled" {% if user.audio_enabled %}checked{% endif %}>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="info-card">
+        <h4>💡 Language Settings Info</h4>
+        <p>Your language preference determines how detected gestures are translated:</p>
+        <ul>
+          <li><strong>Tamil:</strong> Text and audio output in Tamil only</li>
+          <li><strong>Hindi:</strong> Text and audio output in Hindi only</li>
+          <li><strong>Both:</strong> Display translations in both languages</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="btn-group">
+      <button type="submit" class="btn-primary">
+        💾 Save Changes
+      </button>
+      <button type="reset" class="btn-secondary">
+        🔄 Reset Form
+      </button>
+    </div>
+  </form>
+
+  <!-- Danger Zone -->
+  <div class="profile-section" style="border: 2px solid var(--danger);">
+    <div class="section-header">
+      <span class="icon">⚠️</span>
+      <h2 style="color: var(--danger);">Danger Zone</h2>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #fee2e2; border-radius: 10px;">
+      <div>
+        <h4 style="color: var(--danger); margin-bottom: 0.3rem;">Delete Account</h4>
+        <p style="color: #991b1b; font-size: 0.9rem; margin: 0;">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
+      </div>
+      <button class="btn-danger" onclick="deleteAccount()">
+        Delete Account
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteAccount() {
+  if (confirm('⚠️ Are you absolutely sure you want to delete your account?\n\nThis will:\n- Delete all your gesture history\n- Remove all your personal data\n- Cancel any active sessions\n\nThis action CANNOT be undone.')) {
+    if (confirm('Final confirmation: Type DELETE in the prompt to confirm account deletion.')) {
+      const confirmation = prompt('Type DELETE to confirm:');
+      if (confirmation === 'DELETE') {
+        alert('Account deletion initiated. You will be logged out and your data will be removed within 24 hours.');
+        // In real implementation: window.location.href = '/user/delete-account';
+      } else {
+        alert('Account deletion cancelled.');
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

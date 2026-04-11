@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Train {{ gesture_name }} - SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.training-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+}
+
+.training-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.training-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.gesture-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.training-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.camera-section {
+  background: var(--glass-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid var(--border-soft);
+}
+
+#videoElement {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+  aspect-ratio: 4/3;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-btn.capture {
+  background: var(--success);
+  color: white;
+}
+
+.control-btn.capture:hover:not(:disabled) {
+  background: #16a34a;
+  transform: scale(1.05);
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stats-panel {
+  background: var(--glass-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid var(--border-soft);
+}
+
+.stats-panel h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.progress-bar {
+  background: #e5e7eb;
+  height: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  background: var(--success);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.alert.success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid var(--success);
+}
+
+.alert.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid var(--danger);
+}
+
+.instructions {
+  background: #fef3c7;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #f59e0b;
+  margin-bottom: 1.5rem;
+}
+
+.instructions h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #92400e;
+}
+
+.instructions ol {
+  margin-left: 1.5rem;
+  color: #78350f;
+}
+
+.instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.finish-btn {
+  width: 100%;
+  padding: 1rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 1rem;
+}
+
+.finish-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="training-container">
+  <div class="training-header">
+    <h1>🎯 Train Gesture</h1>
+    <div class="gesture-badge">{{ gesture_name }}</div>
+  </div>
+
+  <div class="instructions">
+    <h3>📋 Instructions</h3>
+    <ol>
+      <li>Position your hand clearly in the camera frame</li>
+      <li>Perform the "{{ gesture_name }}" gesture</li>
+      <li>Click "Capture Sample" when ready (aim for 20-30 samples)</li>
+      <li>Vary your hand position, angle, and distance for better training</li>
+      <li>Click "Finish Training" when done</li>
+    </ol>
+  </div>
+
+  <div id="alertBox"></div>
+
+  <div class="training-grid">
+    <div class="camera-section">
+      <video id="videoElement" autoplay playsinline></video>
+      <canvas id="canvas" style="display: none;"></canvas>
+      
+      <div class="camera-controls">
+        <button id="captureBtn" class="control-btn capture">
+          📸 Capture Sample
+        </button>
+      </div>
+    </div>
+
+    <div class="stats-panel">
+      <h2>📊 Training Progress</h2>
+      
+      <div class="stat-item">
+        <div class="stat-value" id="sampleCount">{{ sample_count }}</div>
+        <div class="stat-label">Samples Collected</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: {{ (sample_count / 30 * 100)|round }}%;"></div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value" id="targetCount">30</div>
+        <div class="stat-label">Target Samples</div>
+      </div>
+
+      <button id="finishBtn" class="finish-btn" disabled>
+        ✅ Finish Training
+      </button>
+
+      <button onclick="location.href='{{ url_for('admin.gestures') }}'" 
+              style="width: 100%; padding: 0.75rem; background: #e5e7eb; color: var(--text-dark); border: none; border-radius: 10px; font-weight: 600; margin-top: 0.5rem; cursor: pointer;">
+        ← Back to Gestures
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const videoElement = document.getElementById('videoElement');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const captureBtn = document.getElementById('captureBtn');
+const finishBtn = document.getElementById('finishBtn');
+const sampleCountEl = document.getElementById('sampleCount');
+const progressFillEl = document.getElementById('progressFill');
+const alertBox = document.getElementById('alertBox');
+
+let sampleCount = {{ sample_count }};
+const gestureName = "{{ gesture_name }}";
+const targetSamples = 30;
+const minSamples = 10;
+
+// Start camera
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { width: 640, height: 480 } 
+    });
+    videoElement.srcObject = stream;
+    captureBtn.disabled = false;
+  } catch (err) {
+    showAlert('Camera access denied: ' + err.message, 'error');
+  }
+}
+
+// Capture sample
+captureBtn.addEventListener('click', async function() {
+  captureBtn.disabled = true;
+  
+  // Draw video frame to canvas
+  canvas.width = videoElement.videoWidth;
+  canvas.height = videoElement.videoHeight;
+  ctx.drawImage(videoElement, 0, 0);
+  
+  // Convert to base64
+  const frameData = canvas.toDataURL('image/jpeg');
+  
+  try {
+    // Send to server
+    const response = await fetch('/admin/training/api/add-sample', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gesture_name: gestureName,
+        frame: frameData
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      sampleCount = data.sample_count;
+      updateUI();
+      showAlert(`✅ Sample ${sampleCount} captured!`, 'success');
+    } else {
+      showAlert('❌ ' + data.error, 'error');
+    }
+  } catch (err) {
+    showAlert('❌ Error: ' + err.message, 'error');
+  }
+  
+  setTimeout(() => captureBtn.disabled = false, 500);
+});
+
+// Finish training
+finishBtn.addEventListener('click', function() {
+  if (confirm(`Collected ${sampleCount} samples. Finish training for ${gestureName}?`)) {
+    window.location.href = '{{ url_for("training.training_dashboard") }}';
+  }
+});
+
+// Update UI
+function updateUI() {
+  sampleCountEl.textContent = sampleCount;
+  const progress = Math.min((sampleCount / targetSamples) * 100, 100);
+  progressFillEl.style.width = progress + '%';
+  
+  // Enable finish button if minimum samples reached
+  finishBtn.disabled = sampleCount < minSamples;
+}
+
+// Show alert
+function showAlert(message, type) {
+  alertBox.innerHTML = `<div class="alert ${type}">${message}</div>`;
+  setTimeout(() => alertBox.innerHTML = '', 3000);
+}
+
+// Initialize
+startCamera();
+updateUI();
+</script>
+{% endblock %}{

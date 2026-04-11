@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - SignAI Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+/* ================= ANALYTICS GRID ================= */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.chart-header {
+  margin-bottom: 1.5rem;
+}
+
+.chart-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.chart-header p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ================= USAGE CHART ================= */
+.usage-chart {
+  height: 300px;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  border-bottom: 2px solid var(--border-soft);
+}
+
+.usage-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s;
+  position: relative;
+  cursor: pointer;
+}
+
+.usage-bar:hover {
+  background: linear-gradient(180deg, var(--accent), #16a34a);
+  transform: scaleY(1.05);
+}
+
+.usage-bar .value {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.chart-labels {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.chart-labels .label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ================= PIE CHART ================= */
+.pie-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pie-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pie-color {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.pie-details {
+  flex: 1;
+}
+
+.pie-details .name {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.25rem;
+}
+
+.pie-details .bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pie-details .bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+.pie-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+
+/* ================= STATS TABLE ================= */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stats-table thead {
+  background: rgba(37,99,235,0.1);
+}
+
+.stats-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-bottom: 2px solid var(--border-soft);
+}
+
+.stats-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.stats-table tr:hover {
+  background: rgba(37,99,235,0.05);
+}
+
+/* ================= EMPTY STATE ================= */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+.empty-state .icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>📊 System Analytics</h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">
+    Comprehensive analytics and insights (Last 30 days)
+  </p>
+</div>
+
+<div class="analytics-grid">
+  <!-- Daily Usage Chart -->
+  <div class="chart-card" style="grid-column: 1 / -1;">
+    <div class="chart-header">
+      <h2>Daily Gesture Detections</h2>
+      <p>Number of gestures detected per day over the last 30 days</p>
+    </div>
+
+    {% if daily_usage %}
+    <div class="usage-chart">
+      {% set max_count = daily_usage | map(attribute='count') | max %}
+      {% for day in daily_usage[-30:] %}
+      <div class="usage-bar" 
+           style="height: {{ (day.count / max_count * 100) if max_count > 0 else 0 }}%;"
+           title="{{ day.date }}: {{ day.count }} detections">
+        <span class="value">{{ day.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="chart-labels">
+      {% for day in daily_usage[-30:] %}
+      <div class="label">{{ day.date.strftime('%m/%d') }}</div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">📊</div>
+      <p>No usage data available</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Gesture Category Distribution -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>Gesture Categories</h2>
+      <p>Distribution by category type</p>
+    </div>
+
+    {% if category_stats %}
+    <div class="pie-chart">
+      {% set total_cat = category_stats | sum(attribute='count') %}
+      {% set colors = ['#2563eb', '#f97316', '#22c55e'] %}
+      {% for stat in category_stats %}
+      <div class="pie-item">
+        <div class="pie-color" style="background: {{ colors[loop.index0 % 3] }};"></div>
+        <div class="pie-details">
+          <div class="name">{{ stat.category }}</div>
+          <div class="bar">
+            <div class="bar-fill" 
+                 style="width: {{ (stat.count / total_cat * 100)|round }}%; background: {{ colors[loop.index0 % 3] }};"></div>
+          </div>
+        </div>
+        <div class="pie-value">{{ stat.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">📊</div>
+      <p>No category data available</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Language Preferences -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>Language Preferences</h2>
+      <p>User language selections</p>
+    </div>
+
+    {% if language_stats %}
+    <div class="pie-chart">
+      {% set total_lang = language_stats | sum(attribute='count') %}
+      {% set lang_colors = {'TAMIL': '#2563eb', 'HINDI': '#f97316', 'BOTH': '#22c55e'} %}
+      {% for stat in language_stats %}
+      <div class="pie-item">
+        <div class="pie-color" style="background: {{ lang_colors.get(stat.preferred_language, '#64748b') }};"></div>
+        <div class="pie-details">
+          <div class="name">{{ stat.preferred_language }}</div>
+          <div class="bar">
+            <div class="bar-fill" 
+                 style="width: {{ (stat.count / total_lang * 100)|round }}%; background: {{ lang_colors.get(stat.preferred_language, '#64748b') }};"></div>
+          </div>
+        </div>
+        <div class="pie-value">{{ stat.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">🌐</div>
+      <p>No language data available</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Emergency Trends -->
+  <div class="chart-card" style="grid-column: 1 / -1;">
+    <div class="chart-header">
+      <h2>Emergency Trends</h2>
+      <p>Emergency detections over time</p>
+    </div>
+
+    {% if emergency_trends %}
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Emergencies Detected</th>
+          <th>Trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trend in emergency_trends[-10:] %}
+        <tr>
+          <td>{{ trend.date.strftime('%B %d, %Y') }}</td>
+          <td><strong>{{ trend.count }}</strong></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="background: #fee2e2; height: 8px; width: 200px; border-radius: 4px; overflow: hidden;">
+                <div style="background: var(--danger); height: 100%; width: {{ (trend.count / (emergency_trends | map(attribute='count') | max) * 100)|round }}%;"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">✓</div>
+      <p>No emergency data (Good news!)</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

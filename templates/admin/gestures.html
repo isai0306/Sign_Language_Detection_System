@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Gesture Library - SignAI Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.add-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+}
+
+/* ================= GESTURE GRID ================= */
+.gesture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.gesture-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.gesture-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.gesture-card.emergency {
+  border-left: 4px solid var(--danger);
+  background: linear-gradient(135deg, rgba(249,115,22,0.05), rgba(255,255,255,0.65));
+}
+
+.gesture-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.gesture-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  flex: 1;
+}
+
+.gesture-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.gesture-badge.basic {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.gesture-badge.emergency {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.gesture-badge.medical {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.gesture-badge.location {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.gesture-description {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  min-height: 60px;
+}
+
+.gesture-stats {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.gesture-stats span {
+  color: var(--text-muted);
+}
+
+.gesture-stats strong {
+  color: var(--text-dark);
+}
+
+.gesture-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-edit {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.btn-edit:hover {
+  background: #2563eb;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* ================= CATEGORY SECTIONS ================= */
+.category-section {
+  margin-bottom: 3rem;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border-soft);
+}
+
+.category-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.category-count {
+  background: var(--primary);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ================= STATS BANNER ================= */
+.stats-banner {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(37,99,235,0.3);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-item .value {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.stat-item .label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* ================= EMPTY STATE ================= */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-state .icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .gesture-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-banner {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>✋ Gesture Library</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">
+      All available gestures in the system
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="{{ url_for('admin.add_gesture') }}" class="add-btn">
+      ➕ Add New Gesture
+    </a>
+  </div>
+</div>
+
+<!-- Stats Banner -->
+<div class="stats-banner">
+  <div class="stat-item">
+    <div class="value">{{ gestures|length }}</div>
+    <div class="label">Total Gestures</div>
+  </div>
+  <div class="stat-item">
+    <div class="value">{{ basic_gestures|length }}</div>
+    <div class="label">Basic</div>
+  </div>
+  <div class="stat-item">
+    <div class="value">{{ gestures | sum(attribute='usage_count') }}</div>
+    <div class="label">Total Usage</div>
+  </div>
+</div>
+
+<!-- Basic Gestures Section -->
+{% if basic_gestures %}
+<div class="category-section">
+  <div class="category-header">
+    <h2>👋 Basic Gestures</h2>
+    <span class="category-count">{{ basic_gestures|length }}</span>
+  </div>
+
+  <div class="gesture-grid">
+    {% for gesture in basic_gestures %}
+    <div class="gesture-card">
+      <div class="gesture-header">
+        <div class="gesture-name">{{ gesture.gesture_name }}</div>
+        <span class="gesture-badge {{ gesture.category.lower() }}">{{ gesture.category }}</span>
+      </div>
+      
+      <p class="gesture-description">
+        {{ gesture.description or 'No description available' }}
+      </p>
+      
+      <div class="gesture-stats">
+        <span>📊 Used <strong>{{ gesture.usage_count }}</strong> times</span>
+      </div>
+
+      <div class="gesture-actions">
+        <a href="{{ url_for('admin.edit_gesture', gesture_id=gesture.id) }}" class="action-btn btn-edit">
+          ✏️ Edit
+        </a>
+        <form method="POST" action="{{ url_for('admin.delete_gesture', gesture_id=gesture.id) }}" 
+              style="flex: 1;" onsubmit="return confirm('Delete this gesture?')">
+          <button type="submit" class="action-btn btn-delete" style="width: 100%;">
+            🗑️ Delete
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Alphabet Gestures Section -->
+{% if alphabet_gestures %}
+<div class="category-section">
+  <div class="category-header">
+    <h2>🔤 Alphabet Gestures</h2>
+    <span class="category-count">{{ alphabet_gestures|length }}</span>
+  </div>
+
+  <div class="gesture-grid">
+    {% for gesture in alphabet_gestures %}
+    <div class="gesture-card">
+      <div class="gesture-header">
+        <div class="gesture-name">{{ gesture.gesture_name }}</div>
+        <span class="gesture-badge {{ gesture.category.lower() }}">{{ gesture.category }}</span>
+      </div>
+      
+      <p class="gesture-description">
+        {{ gesture.description or 'No description available' }}
+      </p>
+      
+      <div class="gesture-stats">
+        <span>📊 Used <strong>{{ gesture.usage_count }}</strong> times</span>
+      </div>
+
+      <div class="gesture-actions">
+        <a href="{{ url_for('admin.edit_gesture', gesture_id=gesture.id) }}" class="action-btn btn-edit">
+          ✏️ Edit
+        </a>
+        <form method="POST" action="{{ url_for('admin.delete_gesture', gesture_id=gesture.id) }}" 
+              style="flex: 1;" onsubmit="return confirm('Delete this gesture?')">
+          <button type="submit" class="action-btn btn-delete" style="width: 100%;">
+            🗑️ Delete
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Number Gestures Section -->
+{% if number_gestures %}
+<div class="category-section">
+  <div class="category-header">
+    <h2>🔢 Number Gestures</h2>
+    <span class="category-count">{{ number_gestures|length }}</span>
+  </div>
+
+  <div class="gesture-grid">
+    {% for gesture in number_gestures %}
+    <div class="gesture-card">
+      <div class="gesture-header">
+        <div class="gesture-name">{{ gesture.gesture_name }}</div>
+        <span class="gesture-badge {{ gesture.category.lower() }}">{{ gesture.category }}</span>
+      </div>
+      
+      <p class="gesture-description">
+        {{ gesture.description or 'No description available' }}
+      </p>
+      
+      <div class="gesture-stats">
+        <span>📊 Used <strong>{{ gesture.usage_count }}</strong> times</span>
+      </div>
+
+      <div class="gesture-actions">
+        <a href="{{ url_for('admin.edit_gesture', gesture_id=gesture.id) }}" class="action-btn btn-edit">
+          ✏️ Edit
+        </a>
+        <form method="POST" action="{{ url_for('admin.delete_gesture', gesture_id=gesture.id) }}" 
+              style="flex: 1;" onsubmit="return confirm('Delete this gesture?')">
+          <button type="submit" class="action-btn btn-delete" style="width: 100%;">
+            🗑️ Delete
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Custom Gestures Section -->
+{% if custom_gestures %}
+<div class="category-section">
+  <div class="category-header">
+    <h2>🎯 Custom Gestures</h2>
+    <span class="category-count">{{ custom_gestures|length }}</span>
+  </div>
+
+  <div class="gesture-grid">
+    {% for gesture in custom_gestures %}
+    <div class="gesture-card">
+      <div class="gesture-header">
+        <div class="gesture-name">{{ gesture.gesture_name }}</div>
+        <span class="gesture-badge {{ gesture.category.lower() }}">{{ gesture.category }}</span>
+      </div>
+      
+      <p class="gesture-description">
+        {{ gesture.description or 'No description available' }}
+      </p>
+      
+      <div class="gesture-stats">
+        <span>📊 Used <strong>{{ gesture.usage_count }}</strong> times</span>
+      </div>
+
+      <div class="gesture-actions">
+        <a href="{{ url_for('admin.edit_gesture', gesture_id=gesture.id) }}" class="action-btn btn-edit">
+          ✏️ Edit
+        </a>
+        <form method="POST" action="{{ url_for('admin.delete_gesture', gesture_id=gesture.id) }}" 
+              style="flex: 1;" onsubmit="return confirm('Delete this gesture?')">
+          <button type="submit" class="action-btn btn-delete" style="width: 100%;">
+            🗑️ Delete
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if not gestures %}
+<div class="empty-state">
+  <div class="icon">✋</div>
+  <h3>No Gestures Found</h3>
+  <p>No gestures available in the library.</p>
+  <a href="{{ url_for('admin.add_gesture') }}" class="add-btn" style="margin-top: 1rem;">
+    ➕ Add Your First Gesture
+  </a>
+</div>
+{% endif %}
+{% endblock %}

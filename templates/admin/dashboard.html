@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard Styles */
+.dashboard {
+  padding: 2rem 0;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.stat-card .icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card.primary .icon {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+}
+
+.stat-card.success .icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+
+.stat-card.warning .icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.stat-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.section-card {
+  background: var(--glass-bg);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.section-card h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: rgba(37,99,235,0.1);
+  border-bottom: 2px solid var(--border-soft);
+}
+
+.data-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.data-table tr:hover {
+  background: rgba(37,99,235,0.05);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  border: 2px solid var(--border-soft);
+  background: white;
+  font-weight: 600;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+
+.quick-action-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome back, {{ session.admin_name }}! Here's your SignAI overview.</p>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a href="{{ url_for('admin.users') }}" class="quick-action-btn">
+      👥 Manage Users
+    </a>
+    <a href="{{ url_for('admin.gestures') }}" class="quick-action-btn">
+      ✋ Gesture Library
+    </a>
+    <a href="{{ url_for('admin.add_gesture') }}" class="quick-action-btn">
+      ➕ Add Gesture
+    </a>
+    <a href="{{ url_for('training.training_dashboard') }}" class="quick-action-btn">
+      🎓 Train Model
+    </a>
+    <a href="{{ url_for('admin.analytics') }}" class="quick-action-btn">
+      📊 Analytics
+    </a>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div class="stat-card primary">
+      <div class="icon">👥</div>
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-label">Active Users</div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="icon">✋</div>
+      <div class="stat-value">{{ total_gestures }}</div>
+      <div class="stat-label">Gestures in Library</div>
+    </div>
+
+    <div class="stat-card warning">
+      <div class="icon">📈</div>
+      <div class="stat-value">{{ total_detections }}</div>
+      <div class="stat-label">Detections (30 days)</div>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+    <!-- Recent Users -->
+    <div class="section-card">
+      <h2>👥 Recent Registrations</h2>
+
+      {% if recent_users %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Registered</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in recent_users[:5] %}
+          <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="status-badge {{ user.status.lower() }}">
+                {{ user.status }}
+              </span>
+            </td>
+            <td>{{ user.created_at.strftime('%m/%d/%y') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="text-align: right; margin-top: 1rem;">
+        <a href="{{ url_for('admin.users') }}" style="color: var(--primary); font-weight: 600;">
+          View All →
+        </a>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No recent registrations</p>
+      {% endif %}
+    </div>
+
+    <!-- Top Gestures -->
+    <div class="section-card">
+      <h2>📊 Top Gestures (30 Days)</h2>
+
+      {% if gesture_stats %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Gesture</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in gesture_stats[:5] %}
+          <tr>
+            <td><strong>#{{ loop.index }}</strong></td>
+            <td>{{ stat.gesture_name }}</td>
+            <td>{{ stat.usage_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="text-align: right; margin-top: 1rem;">
+        <a href="{{ url_for('admin.analytics') }}" style="color: var(--primary); font-weight: 600;">
+          View Analytics →
+        </a>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No gesture data yet</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

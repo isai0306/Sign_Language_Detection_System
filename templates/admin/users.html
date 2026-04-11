@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - SignAI Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ================= PAGE HEADER ================= */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.search-bar {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  max-width: 500px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--border-soft);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* ================= TABLE CARD ================= */
+.table-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.table-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.table-stats {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ================= USER TABLE ================= */
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table thead {
+  background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
+}
+
+.user-table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+  border-bottom: 2px solid var(--border-soft);
+}
+
+.user-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.user-table tr:hover {
+  background: rgba(37,99,235,0.05);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.user-details .name {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.user-details .email {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.stats-mini {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.stats-mini span {
+  color: var(--text-muted);
+}
+
+.stats-mini strong {
+  color: var(--text-dark);
+}
+
+/* ================= ACTION BUTTONS ================= */
+.action-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.action-btn.toggle {
+  background: var(--warning);
+  color: white;
+}
+
+.action-btn.toggle:hover {
+  background: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(245,158,11,0.3);
+}
+
+.action-btn.view {
+  background: var(--primary);
+  color: white;
+}
+
+.action-btn.view:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(37,99,235,0.3);
+}
+
+/* ================= PAGINATION ================= */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+}
+
+.pagination a,
+.pagination span {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.pagination a {
+  background: white;
+  color: var(--primary);
+  border: 2px solid var(--border-soft);
+}
+
+.pagination a:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.pagination .current {
+  background: var(--primary);
+  color: white;
+  border: 2px solid var(--primary);
+}
+
+.pagination .disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border: 2px solid var(--border-soft);
+}
+
+/* ================= EMPTY STATE ================= */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-state .icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.empty-state h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+
+.empty-state p {
+  color: var(--text-muted);
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .user-table {
+    font-size: 0.85rem;
+  }
+  
+  .user-table th,
+  .user-table td {
+    padding: 0.75rem;
+  }
+  
+  .stats-mini {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>User Management</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">
+      Total: {{ total }} users
+    </p>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="table-header">
+    <h2>All Users</h2>
+    <div class="table-stats">
+      Page {{ page }} of {{ total_pages }}
+    </div>
+  </div>
+
+  {% if users %}
+  <table class="user-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Register Number</th>
+        <th>Phone</th>
+        <th>Activity</th>
+        <th>Status</th>
+        <th>Registered</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>
+          <div class="user-info">
+            <div class="user-avatar">
+              {{ user.name[0]|upper }}
+            </div>
+            <div class="user-details">
+              <div class="name">{{ user.name }}</div>
+              <div class="email">{{ user.email }}</div>
+            </div>
+          </div>
+        </td>
+        <td>{{ user.register_number }}</td>
+        <td>{{ user.phone or '-' }}</td>
+        <td>
+          <span class="status-badge {{ user.status.lower() }}">
+            {{ user.status }}
+          </span>
+        </td>
+        <td>{{ user.created_at.strftime('%m/%d/%Y') }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" style="display: inline;">
+            <button type="submit" class="action-btn toggle">
+              {% if user.status == 'ACTIVE' %}
+                Deactivate
+              {% else %}
+                Activate
+              {% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('admin.users', page=page-1) }}">← Previous</a>
+    {% else %}
+      <span class="disabled">← Previous</span>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+        <span class="current">{{ p }}</span>
+      {% else %}
+        <a href="{{ url_for('admin.users', page=p) }}">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+      <a href="{{ url_for('admin.users', page=page+1) }}">Next →</a>
+    {% else %}
+      <span class="disabled">Next →</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">👥</div>
+    <h3>No Users Found</h3>
+    <p>No registered users yet.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

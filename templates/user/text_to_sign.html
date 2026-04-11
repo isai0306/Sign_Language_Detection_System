@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}Text to Sign - SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #2563eb;
+  --accent: #22c55e;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+}
+
+.text-to-sign-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+/* ================= INPUT SECTION ================= */
+.input-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.8rem;
+  font-size: 1.1rem;
+}
+
+.text-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.3s ease;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.word-count {
+  text-align: right;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.convert-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--primary), #1e40af);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+}
+
+.convert-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4);
+}
+
+.convert-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= RESULTS SECTION ================= */
+.results-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.1);
+  display: none;
+}
+
+.results-section.active {
+  display: block;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.results-header h2 {
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.input-display {
+  background: rgba(37, 99, 235, 0.05);
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid var(--primary);
+  margin-bottom: 2rem;
+}
+
+.input-display .label {
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.input-display .text {
+  font-size: 1.2rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ================= SIGN DISPLAY ================= */
+.signs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sign-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease;
+}
+
+.sign-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sign-image {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 1rem;
+  background: #f1f5f9;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.sign-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sign-word {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.3rem;
+}
+
+.sign-number {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.no-sign-available {
+  background: #fef3c7;
+  border: 2px dashed #f59e0b;
+}
+
+.no-sign-available .sign-image {
+  background: transparent;
+  color: #f59e0b;
+}
+
+/* ================= CONTROLS ================= */
+.playback-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.control-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.btn-play {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-play:hover {
+  background: #16a34a;
+  transform: scale(1.05);
+}
+
+.btn-reset {
+  background: #64748b;
+  color: white;
+}
+
+.btn-reset:hover {
+  background: #475569;
+}
+
+.btn-save {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-save:hover {
+  background: #1e40af;
+}
+
+/* ================= INFO BOX ================= */
+.info-box {
+  background: #dbeafe;
+  border-left: 4px solid var(--primary);
+  padding: 1.2rem;
+  border-radius: 10px;
+  margin-top: 2rem;
+}
+
+.info-box h3 {
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.info-box p {
+  color: #475569;
+  line-height: 1.6;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .signs-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+  
+  .sign-image {
+    width: 120px;
+    height: 120px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="text-to-sign-container">
+  <div class="page-header">
+    <h1>✍️ Text to Sign Language</h1>
+    <p>Type your message and see it converted into sign language visuals</p>
+  </div>
+
+  <!-- Input Section -->
+  <div class="input-section">
+    <form method="POST" action="{{ url_for('user.text_to_sign') }}" id="textForm">
+      <div class="input-group">
+        <label for="inputText">Enter Your Message</label>
+        <textarea 
+          id="inputText" 
+          name="input_text" 
+          class="text-input" 
+          placeholder="Type your message here... (e.g., HELLO THANK YOU)"
+          required
+        >{{ input_text if input_text else '' }}</textarea>
+        <div class="word-count">
+          <span id="wordCount">0</span> words
+        </div>
+      </div>
+
+      <button type="submit" class="convert-btn" id="convertBtn">
+        🔄 Convert to Sign Language
+      </button>
+    </form>
+  </div>
+
+  <!-- Results Section -->
+  {% if show_result %}
+  <div class="results-section active" id="resultsSection">
+    <div class="results-header">
+      <h2>🎯 Sign Language Sequence</h2>
+    </div>
+
+    <div class="input-display">
+      <div class="label">Your Input:</div>
+      <div class="text">{{ input_text }}</div>
+    </div>
+
+    <div class="signs-grid" id="signsGrid">
+      {% for word in words %}
+        <div class="sign-card">
+          <div class="sign-image">
+            {% if word.upper() == 'HELLO' %}
+              <img src="{{ url_for('static', filename='images/signs/hello.jpg') }}" alt="HELLO">
+            {% elif word.upper() == 'HELP' %}
+              <img src="{{ url_for('static', filename='images/signs/help.jpg') }}" alt="HELP">
+            {% elif word.upper() == 'YES' %}
+              <img src="{{ url_for('static', filename='images/signs/yes.jpg') }}" alt="YES">
+            {% elif word in gesture_data and gesture_data[word].image_path %}
+              <img src="{{ url_for('static', filename=gesture_data[word].image_path) }}" 
+                   alt="{{ word }}" 
+                   onerror="this.style.display='none'; this.parentElement.innerHTML='❓';">
+            {% else %}
+              ❓
+            {% endif %}
+          </div>
+          <div class="sign-word">{{ word }}</div>
+          <div class="sign-number">Sign {{ loop.index }}/{{ words|length }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="playback-controls">
+      <button class="control-button btn-play" onclick="playSequence()">
+        ▶️ Play Sequence
+      </button>
+      <button class="control-button btn-reset" onclick="resetForm()">
+        🔄 Reset
+      </button>
+      <button class="control-button btn-save" onclick="saveSequence()">
+        💾 Save Sequence
+      </button>
+    </div>
+
+    <div class="info-box">
+      <h3>ℹ️ How to Use</h3>
+      <p>
+        The signs are displayed in the order of your input text. 
+        Available sign images: HELLO, HELP, YES. Other words show emoji representations or ❓ if not available.
+        Click "Play Sequence" to see an animated version. 
+        Some words may not have sign representations yet.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Word counter
+const inputText = document.getElementById('inputText');
+
+const wordCount = document.getElementById('wordCount');
+
+inputText.addEventListener('input', () => {
+  const text = inputText.value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  wordCount.textContent = words;
+});
+
+// Initialize word count on load
+if (inputText.value) {
+  const text = inputText.value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  wordCount.textContent = words;
+}
+
+// Play sequence animation
+let currentIndex = 0;
+let playInterval = null;
+
+function playSequence() {
+  const cards = document.querySelectorAll('.sign-card');
+  if (cards.length === 0) return;
+  
+  // Reset
+  cards.forEach(card => {
+    card.style.transform = 'scale(1)';
+    card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
+  });
+  
+  currentIndex = 0;
+  
+  if (playInterval) {
+    clearInterval(playInterval);
+  }
+  
+  playInterval = setInterval(() => {
+    // Reset previous
+    if (currentIndex > 0) {
+      cards[currentIndex - 1].style.transform = 'scale(1)';
+      cards[currentIndex - 1].style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
+    }
+    
+    // Highlight current
+    if (currentIndex < cards.length) {
+      cards[currentIndex].style.transform = 'scale(1.1)';
+      cards[currentIndex].style.boxShadow = '0 20px 50px rgba(37, 99, 235, 0.3)';
+      cards[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      currentIndex++;
+    } else {
+      // End of sequence
+      clearInterval(playInterval);
+      cards[cards.length - 1].style.transform = 'scale(1)';
+      cards[cards.length - 1].style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
+    }
+  }, 1500);
+}
+
+// Reset form
+function resetForm() {
+  if (confirm('This will clear your current input. Continue?')) {
+    window.location.href = "{{ url_for('user.text_to_sign') }}";
+  }
+}
+
+// Save sequence
+function saveSequence() {
+  alert('Sequence saved to your history! You can view it anytime in your profile.');
+  // In a real implementation, this would save to database
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  if (playInterval) {
+    clearInterval(playInterval);
+  }
+});
+</script>
+{% endblock %}

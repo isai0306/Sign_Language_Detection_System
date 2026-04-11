@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Server Error | SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ================= 500 PAGE ================= */
+.error-wrapper {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-card {
+  max-width: 760px;
+  width: 100%;
+  padding: 4.2rem 3.6rem;
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px);
+  border-radius: 30px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 45px 110px rgba(0,0,0,0.18);
+  position: relative;
+  overflow: hidden;
+  animation: floatIn 1s ease;
+}
+
+/* Danger glow */
+.error-card::before {
+  content: "";
+  position: absolute;
+  bottom: -140px;
+  left: -140px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(249,115,22,0.25), transparent 70%);
+  z-index: -1;
+}
+
+/* Error Code */
+.error-code {
+  font-size: 6.2rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.error-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 0.6rem;
+}
+
+.error-desc {
+  margin-top: 1.2rem;
+  font-size: 1.08rem;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin-inline: auto;
+  line-height: 1.7;
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  margin-top: 1.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(249,115,22,0.15);
+  color: #9a3412;
+}
+
+/* Actions */
+.error-actions {
+  margin-top: 2.8rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.3rem;
+  flex-wrap: wrap;
+}
+
+.error-actions a {
+  padding: 0.9rem 1.7rem;
+  border-radius: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+/* Buttons */
+.btn-retry {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff;
+  box-shadow: 0 15px 40px rgba(249,115,22,0.4);
+}
+
+.btn-retry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 25px 60px rgba(249,115,22,0.55);
+}
+
+.btn-home {
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+}
+
+.btn-home:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Animation */
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(45px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .error-card {
+    padding: 3.2rem 2.1rem;
+  }
+
+  .error-code {
+    font-size: 4.8rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-wrapper">
+  <div class="error-card">
+    <div class="error-code">500</div>
+    <div class="error-title">Internal Server Error</div>
+
+    <span class="status-badge">System temporarily unstable</span>
+
+    <p class="error-desc">
+      Something went wrong on our side.  
+      This is not your fault — our system detected an issue and is already working to recover.
+    </p>
+
+    <div class="error-actions">
+      <a href="javascript:location.reload()" class="btn-retry">🔄 Retry</a>
+      <a href="{{ url_for('home') }}" class="btn-home">🏠 Go Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

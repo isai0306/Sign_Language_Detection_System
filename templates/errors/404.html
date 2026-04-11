@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Page Not Found | SignAI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ================= 404 PAGE ================= */
+.error-wrapper {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-card {
+  max-width: 720px;
+  width: 100%;
+  padding: 4rem 3.5rem;
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 28px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  animation: floatIn 0.9s ease;
+}
+
+/* Soft glow background */
+.error-card::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(37,99,235,0.25), transparent 70%);
+  z-index: -1;
+}
+
+/* 404 Text */
+.error-code {
+  font-size: 6.5rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.error-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-top: 0.6rem;
+}
+
+.error-desc {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+/* Actions */
+.error-actions {
+  margin-top: 2.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.error-actions a {
+  padding: 0.85rem 1.6rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-home {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  box-shadow: 0 14px 35px rgba(37,99,235,0.35);
+}
+
+.btn-home:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 50px rgba(37,99,235,0.45);
+}
+
+.btn-back {
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+}
+
+.btn-back:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Animation */
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .error-card {
+    padding: 3rem 2rem;
+  }
+
+  .error-code {
+    font-size: 4.8rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-wrapper">
+  <div class="error-card">
+    <div class="error-code">404</div>
+    <div class="error-title">Page Not Found</div>
+    <p class="error-desc">
+      The page you’re looking for doesn’t exist or may have been moved.
+      Don’t worry — SignAI is still running perfectly.
+    </p>
+
+    <div class="error-actions">
+      <a href="{{ url_for('home') }}" class="btn-home">🏠 Go Home</a>
+      <a href="javascript:history.back()" class="btn-back">← Go Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

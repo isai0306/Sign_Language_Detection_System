@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Training Dashboard - SignAI{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 2rem auto;">
+  <h1>🎓 Model Training Dashboard</h1>
+  
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin: 2rem 0;">
+    <div style="background: var(--glass-bg); padding: 2rem; border-radius: 16px;">
+      <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">
+        {{ report.total_gestures }}
+      </div>
+      <div style="color: var(--text-muted);">Gestures with Data</div>
+    </div>
+    
+    <div style="background: var(--glass-bg); padding: 2rem; border-radius: 16px;">
+      <div style="font-size: 2.5rem; font-weight: 800; color: var(--success);">
+        {{ report.total_samples }}
+      </div>
+      <div style="color: var(--text-muted);">Total Samples</div>
+    </div>
+    
+    <div style="background: var(--glass-bg); padding: 2rem; border-radius: 16px;">
+      <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">
+        {{ report.ready_to_train[1] }}
+      </div>
+      {% if report.ready_to_train[0] %}
+        <a href="{{ url_for('training.train_model') }}" style="padding: 0.75rem 1.5rem; background: var(--success); color: white; border-radius: 10px; text-decoration: none; display: inline-block; font-weight: 600;">
+          🚀 Train Model
+        </a>
+      {% else %}
+        <div style="color: var(--text-muted);">Collect more samples</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 style="margin: 2rem 0 1rem;">📦 Collected Samples</h2>
+  
+  {% for gesture, count in report.sample_counts.items() %}
+  <div style="background: var(--glass-bg); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <div style="font-weight: 700; font-size: 1.1rem;">{{ gesture }}</div>
+      <div style="color: var(--text-muted);">{{ count }} samples</div>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="{{ url_for('training.collect_data', gesture_name=gesture) }}" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
+        + Add More
+      </a>
+      <form method="POST" action="{{ url_for('training.clear_samples', gesture_name=gesture) }}" style="display: inline;" onsubmit="return confirm('Clear all samples for {{ gesture }}?')">
+        <button type="submit" style="padding: 0.5rem 1rem; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          🗑️ Clear
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

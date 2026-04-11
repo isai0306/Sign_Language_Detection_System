@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Train Model - SignAI{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+  <h1>🚀 Train Gesture Recognition Model</h1>
+
+  <div style="background: var(--glass-bg); padding: 2rem; border-radius: 16px; margin: 2rem 0;">
+    <h2 style="margin-bottom: 1rem;">📊 Current Training Data</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 2rem;">
+      <div style="text-align: center;">
+        <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">{{ report.total_gestures }}</div>
+        <div style="color: var(--text-muted);">Gestures</div>
+      </div>
+
+      <div style="text-align: center;">
+        <div style="font-size: 2rem; font-weight: 800; color: var(--success);">{{ report.total_samples }}</div>
+        <div style="color: var(--text-muted);">Total Samples</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+      <h3 style="margin-bottom: 0.5rem;">📦 Samples per Gesture</h3>
+      {% for gesture, count in report.sample_counts.items() %}
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+        <span>{{ gesture }}</span>
+        <span style="font-weight: 600;">{{ count }} samples</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="padding: 1rem; border-radius: 8px; background: {% if report.ready_to_train[0] %}var(--success-bg){% else %}var(--warning-bg){% endif %};">
+      <div style="font-weight: 600;">{{ report.ready_to_train[1] }}</div>
+    </div>
+  </div>
+
+  {% if report.ready_to_train[0] %}
+  <div style="background: var(--glass-bg); padding: 2rem; border-radius: 16px;">
+    <h2 style="margin-bottom: 1rem;">⚙️ Training Configuration</h2>
+
+    <form method="POST" action="{{ url_for('training.train_model') }}">
+      <div style="margin-bottom: 1.5rem;">
+        <label for="model_type" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Model Type</label>
+        <select name="model_type" id="model_type" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+          <option value="neural_network">CNN (Deep Learning - Recommended)</option>
+          <option value="random_forest">Random Forest (Traditional ML)</option>
+        </select>
+      </div>
+
+      <button type="submit" style="width: 100%; padding: 1rem; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
+        🚀 Start Training
+      </button>
+    </form>
+  </div>
+  {% else %}
+  <div style="background: var(--glass-bg); padding: 2rem; border-radius: 16px; text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+    <h2>Collect More Training Data</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">You need more gesture samples before training a model.</p>
+    <a href="{{ url_for('training.training_dashboard') }}" style="padding: 1rem 2rem; background: var(--primary); color: white; border-radius: 10px; text-decoration: none; font-weight: 600;">
+      Go to Training Dashboard
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
