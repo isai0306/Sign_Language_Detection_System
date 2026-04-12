@@ -1,0 +1,42 @@
+Traceback (most recent call last):
+  File "E:\project\Sign Language\routes\api_routes.py", line 139, in detect_gesture
+    out = detection_service.detect_gesture_payload(
+  File "E:\project\Sign Language\services\detection_service.py", line 128, in detect_gesture_payload
+    return preds
+  File "E:\project\Sign Language\services\detection_service.py", line 153, in detect_gesture_from_bgr
+    frame = np.asarray(frame, dtype=np.uint8)
+  File "E:\project\Sign Language\ai\hand_detector.py", line 55, in find_hands
+    results = self.hands.process(frame_rgb)
+  File "E:\project\Sign Language\.venv\lib\site-packages\mediapipe\python\solutions\hands.py", line 153, in process
+    return super().process(input_data={'image': image})
+  File "E:\project\Sign Language\.venv\lib\site-packages\mediapipe\python\solution_base.py", line 362, in process
+    self._graph.add_packet_to_input_stream(
+ValueError: Graph has errors: 
+; Packet timestamp mismatch on a calculator receiving from stream "image". Current minimum expected timestamp is 166666 but received 166665. Are you using a custom InputStreamHandler? Note that some InputStreamHandlers allow timestamps that are not strictly monotonically increasing. See for example the ImmediateInputStreamHandler class comment.
+; Packet timestamp mismatch on a calculator receiving from stream "image". Current minimum expected timestamp is 166666 but received 166665. Are you using a custom InputStreamHandler? Note that some InputStreamHandlers allow timestamps that are not strictly monotonically increasing. See for example the ImmediateInputStreamHandler class comment.
+; Packet timestamp mismatch on a calculator receiving from stream "image". Current minimum expected timestamp is 166666 but received 166665. Are you using a custom InputStreamHandler? Note that some InputStreamHandlers allow timestamps that are not strictly monotonically increasing. See for example the ImmediateInputStreamHandler class comment.
+; Packet timestamp mismatch on a calculator receiving from stream "image". Current minimum expected timestamp is 166666 but received 166665. Are you using a custom InputStreamHandler? Note that some InputStreamHandlers allow timestamps that are not strictly monotonically increasing. See for example the ImmediateInputStreamHandler class comment.
+2026-04-11 12:18:06,003 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:06,033 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:06,133 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:06,125 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:06,127 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:06,039 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:32,766 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:32,852 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:32,854 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:32,870 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:32,870 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:18:32,870 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:19:04,241 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:19:04,246 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:19:04,342 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:19:04,345 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:19:04,347 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:19:04,349 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:28:15,631 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:28:15,698 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:28:15,698 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:28:15,722 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:28:15,728 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)
+2026-04-11 12:28:15,728 [WARNING] signai.api: Using SimpleGestureRecognizer (no trained model)

@@ -113,8 +113,19 @@ def _update_sequence_and_predict(primary_flat: np.ndarray, user_id: Optional[int
 
 
 def _per_hand_quick_pred(landmarks_list: List[np.ndarray], shared: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Use shared primary prediction on every box (matches dual-hand demo UI)."""
-    return [dict(shared) for _ in landmarks_list]
+    """Independent per-hand prediction for dual-hand overlay."""
+    if not _simple_recognizer:
+        return [dict(shared) for _ in landmarks_list]
+    
+    preds = []
+    for lm in landmarks_list:
+        normalized = _hand_detector.normalize_landmarks(lm)
+        try:
+            pred = _simple_recognizer.predict_from_landmarks(normalized.tolist())
+        except Exception:
+            pred = dict(shared)
+        preds.append(pred)
+    return preds
 
 
 def detect_gesture_payload(
@@ -163,6 +174,8 @@ def detect_gesture_from_bgr(
         return out
 
     landmarks_list = _hand_detector.extract_landmarks(results)
+    num_hands = len(results.multi_hand_landmarks) if results.multi_hand_landmarks else 0
+    _log.debug("Hands detected: %d", num_hands)
     if not landmarks_list:
         out = {
             "success": True,
@@ -198,7 +211,12 @@ def detect_gesture_from_bgr(
     }
     if final_gesture:
         overlay_label = {"gesture": final_gesture, "confidence": float(final_conf)}
+    # Independent per-hand predictions for overlay (dual-hand support)
     overlay_preds = _per_hand_quick_pred(landmarks_list, overlay_label)
+    
+    _log.debug("raw=%s conf=%.2f voted=%s final=%s",
+               raw.get('gesture'), raw.get('confidence', 0),
+               voted_gesture, final_gesture)
     import cv2
 
     vis = frame.copy()

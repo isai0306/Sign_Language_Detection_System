@@ -29,7 +29,6 @@ pyttsx3==2.90
 # ================= UTILITIES =================
 python-dotenv==1.0.0
 requests==2.31.0
-SpeechRecognition==3.10.1
 
 # ================================================================
 # INSTALLATION INSTRUCTIONS

@@ -113,16 +113,24 @@ def text_to_sign():
             conn = get_db()
             cursor = conn.cursor(dictionary=True)
             
+            # Normalize: keep original casing for display, uppercase for lookup
             words = input_text.upper().split()
             gesture_data = {}
             
             for word in words:
+                # Try exact match first, then underscore variant
                 cursor.execute("""
                     SELECT gesture_name, image_path, description
-                    FROM gestures WHERE gesture_name = %s
+                    FROM gestures WHERE UPPER(gesture_name) = %s
                 """, (word,))
-                
                 result = cursor.fetchone()
+                if not result:
+                    # Try underscore version (e.g. GOOD_MORNING)
+                    cursor.execute("""
+                        SELECT gesture_name, image_path, description
+                        FROM gestures WHERE UPPER(REPLACE(gesture_name,' ','_')) = %s
+                    """, (word.replace(' ', '_'),))
+                    result = cursor.fetchone()
                 gesture_data[word] = result if result else None
             
             cursor.close()
@@ -137,7 +145,7 @@ def text_to_sign():
         except Exception as e:
             flash(f'Error: {str(e)}', 'error')
     
-    return render_template('user/text_to_sign.html', show_result=False)
+    return render_template('user/text_to_sign.html', show_result=False, gesture_data={})
 
 # History
 @user_bp.route('/history')

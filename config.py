@@ -48,10 +48,10 @@ class Config:
     # AI MODEL SETTINGS
     # ============================
     MODEL_PATH = 'static/models/gesture_model.h5'
-    CONFIDENCE_THRESHOLD = 0.85  # Minimum confidence for gesture detection
-    SEQUENCE_LENGTH = 25  # Frames for LSTM / temporal context
-    VOTE_WINDOW = 15  # Majority voting over last N predictions
-    FRAME_PROCESS_INTERVAL = 2  # Process every Nth request per user (server-side skip)
+    CONFIDENCE_THRESHOLD = 0.60  # Lower for real-time responsiveness
+    SEQUENCE_LENGTH = 25
+    VOTE_WINDOW = 7   # Faster response with smaller window
+    FRAME_PROCESS_INTERVAL = 1  # Process EVERY frame for better detection
     EMERGENCY_COOLDOWN_SEC = 45.0
     TRANSLATION_CACHE_MAX = 512
     LSTM_EPOCHS_DEFAULT = 80
@@ -83,8 +83,8 @@ class Config:
     # ============================
     MEDIAPIPE_CONFIG = {
         'max_num_hands': 2,
-        'min_detection_confidence': 0.7,
-        'min_tracking_confidence': 0.5
+        'min_detection_confidence': 0.5,  # Lower for better detection at angles
+        'min_tracking_confidence': 0.4    # Lower for continuous tracking
     }
     
     # ============================

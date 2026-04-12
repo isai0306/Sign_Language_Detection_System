@@ -325,13 +325,39 @@ class SimpleGestureRecognizer:
     def __init__(self):
         self.gestures = {
             'HELLO': 'Open palm facing camera',
+            'HI': 'Wave hand side to side',
             'THANK_YOU': 'Hand moving from chin forward',
             'YES': 'Closed fist',
             'NO': 'Open hand shaking',
             'HELP': 'One finger pointing up',
             'PLEASE': 'Four fingers extended',
             'WATER': 'Three fingers (W shape)',
-            'FOOD': 'Hand to mouth gesture'
+            'FOOD': 'Hand to mouth gesture',
+            # Phase 2 gestures
+            'PEACE': 'Index and middle finger extended (V shape)',
+            'THUMBS_UP': 'Only thumb extended pointing up',
+            'CALL_ME': 'Thumb and pinky extended (phone shape)',
+            'LOVE': 'Thumb, index, and pinky extended (ILY)',
+            'STOP': 'All fingers extended, palm facing out',
+            # From reference image
+            'GOOD': 'Thumbs up gesture',
+            'WRONG': 'Thumbs down gesture',
+            'NICE': 'Open palm spread wide',
+            'ACCIDENT': 'Two fists colliding',
+            'AEROPLANE': 'Thumb + index extended (flying)',
+            'BUSY': 'Closed fist side motion',
+            'AWESOME': 'Both thumbs up',
+            'TOGETHER': 'Three fingers together',
+            'CONFIDENT': 'Fist on chest area',
+            # Day-to-day
+            'GOOD_MORNING': 'Wave + morning gesture',
+            'WELCOME': 'Arms open wide',
+            'GOOD_NIGHT': 'Hands folded near cheek',
+            'SORRY': 'Fist rubbed on chest',
+            'EXCUSE_ME': 'Hand raised forward',
+            'I_AM_FINE': 'Thumbs up + smile',
+            'HOW_ARE_YOU': 'Point and wave',
+            'SEE_YOU_LATER': 'Wave goodbye',
         }
     
     def predict_from_landmarks(self, landmarks):
@@ -426,15 +452,44 @@ class SimpleGestureRecognizer:
         if fingers_count == 5 and palm_facing:
             return 'HELLO', 0.90
         
-        # Fist (no fingers) = YES
+        # All fingers extended, palm NOT facing camera = STOP
+        if fingers_count == 5 and not palm_facing:
+            return 'STOP', 0.85
+        
+        # Fist (no fingers) = YES / CONFIDENT (fist on chest area)
         if fingers_count == 0:
+            # Check if landmark[0] (wrist) is near center = CONFIDENT
+            wrist_y = landmarks[0][1] if len(landmarks) > 0 else 0
+            if abs(wrist_y) < 0.15:
+                return 'CONFIDENT', 0.80
             return 'YES', 0.85
         
         # Only index finger = HELP
         if finger_states == [False, True, False, False, False]:
             return 'HELP', 0.88
         
-        # Four fingers (no thumb) = PLEASE
+        # Only thumb extended upward = THUMBS_UP / GOOD
+        if finger_states == [True, False, False, False, False]:
+            # Check thumb direction: if thumb tip y < wrist y = thumbs up
+            thumb_tip_y = landmarks[4][1]
+            if thumb_tip_y < -0.05:  # thumb going upward
+                return 'THUMBS_UP', 0.88
+            else:  # thumb going downward = WRONG
+                return 'WRONG', 0.85
+        
+        # Index + middle only = PEACE ✌️ / HI
+        if finger_states == [False, True, True, False, False]:
+            return 'PEACE', 0.87
+
+        # Thumb + pinky only = CALL ME 🤙
+        if finger_states == [True, False, False, False, True]:
+            return 'CALL_ME', 0.86
+        
+        # Thumb + index + pinky = LOVE / ILY ❤️ / AEROPLANE
+        if finger_states == [True, True, False, False, True]:
+            return 'LOVE', 0.85
+        
+        # Four fingers (no thumb) = PLEASE / AWESOME
         if fingers_count == 4 and not finger_states[0]:
             return 'PLEASE', 0.82
         
@@ -442,12 +497,22 @@ class SimpleGestureRecognizer:
         if fingers_count == 3 and finger_states[0] and finger_states[1] and finger_states[2]:
             return 'WATER', 0.80
         
+        # Three fingers (index, middle, ring) = TOGETHER / NICE
+        if fingers_count == 3 and finger_states[1] and finger_states[2] and finger_states[3]:
+            return 'TOGETHER', 0.78
+        
         # Two fingers (index, middle) = THANK YOU
         if fingers_count == 2 and finger_states[1] and finger_states[2]:
             return 'THANK_YOU', 0.75
         
+        # Two fingers (thumb + index) = AEROPLANE
+        if finger_states == [True, True, False, False, False]:
+            return 'AEROPLANE', 0.78
+        
         # Default based on finger count
-        if fingers_count >= 3:
+        if fingers_count >= 4:
+            return 'NICE', 0.62
+        elif fingers_count >= 3:
             return 'HELLO', 0.60
         elif fingers_count == 1:
             return 'HELP', 0.60

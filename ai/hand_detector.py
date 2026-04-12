@@ -25,6 +25,9 @@ class HandDetector:
             min_detection_confidence: Minimum confidence for detection
             min_tracking_confidence: Minimum confidence for tracking
         """
+        import threading
+        self._lock = threading.Lock()
+        
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
@@ -52,7 +55,8 @@ class HandDetector:
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
         # Process the frame
-        results = self.hands.process(frame_rgb)
+        with self._lock:
+            results = self.hands.process(frame_rgb)
         
         # Draw hand landmarks
         if draw and results.multi_hand_landmarks:
@@ -172,16 +176,40 @@ class HandDetector:
         h, w = frame.shape[:2]
         hand_predictions = hand_predictions or []
         
-        # Color palette for gestures to make it look premium
+        # Color palette for gestures — dynamic per gesture
         colors = {
-            'HELLO': (0, 0, 255),       # Red
-            'THANK_YOU': (0, 255, 0),   # Green
-            'YES': (255, 255, 0),       # Cyan
+            'HELLO': (0, 200, 0),       # Green
+            'HI': (0, 220, 0),          # Bright Green
+            'THANK_YOU': (0, 255, 128), # Spring Green
+            'YES': (0, 215, 255),       # Gold
             'NO': (0, 165, 255),        # Orange
             'HELP': (0, 0, 255),        # Red (priority)
-            'WATER': (255, 0, 0),       # Blue
+            'WATER': (255, 100, 0),     # Blue-Orange
             'FOOD': (200, 100, 250),    # Violet
-            'PLEASE': (255, 191, 0),    # Deep Sky Blue
+            'PLEASE': (255, 191, 0),    # Sky Blue
+            'PEACE': (128, 255, 0),     # Lime
+            'THUMBS_UP': (0, 215, 255), # Gold
+            'GOOD': (0, 215, 255),      # Gold
+            'CALL_ME': (255, 105, 180), # Hot Pink
+            'LOVE': (147, 20, 255),     # Purple
+            'STOP': (0, 0, 200),        # Dark Red
+            # Reference image gestures
+            'WRONG': (0, 0, 220),       # Red
+            'NICE': (50, 200, 50),      # Mid Green
+            'ACCIDENT': (0, 100, 255),  # Orange-Red
+            'AEROPLANE': (255, 200, 0), # Cyan-Gold
+            'BUSY': (80, 80, 80),       # Gray
+            'AWESOME': (0, 200, 255),   # Gold-Cyan
+            'TOGETHER': (200, 50, 200), # Magenta
+            'CONFIDENT': (100, 255, 100), # Light Green
+            # Day-to-day
+            'GOOD_MORNING': (0, 220, 190), # Teal
+            'WELCOME': (100, 200, 255),    # Light Blue
+            'GOOD_NIGHT': (50, 50, 200),   # Navy
+            'EXCUSE_ME': (200, 200, 0),    # Yellow
+            'I_AM_FINE': (0, 200, 100),    # Green
+            'HOW_ARE_YOU': (200, 100, 0),  # Orange
+            'SEE_YOU_LATER': (150, 150, 255), # Lavender
             'UNKNOWN': (128, 128, 128)  # Gray
         }
         

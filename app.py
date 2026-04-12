@@ -3,7 +3,6 @@ from datetime import timedelta
 import os
 
 from config import Config
-from utils.app_logger import init_app_logging
 from routes.auth import auth_bp
 from routes.user_routes import user_bp
 from routes.admin_routes import admin_bp
@@ -13,9 +12,6 @@ from routes.training_routes import training_bp
 app = Flask(__name__)
 app.config.from_object(Config)
 app.permanent_session_lifetime = timedelta(hours=2)
-init_app_logging()
-
-# DB migrations: run `python create_db.py` when MySQL is up (avoid connector crash if DB is offline).
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -45,8 +41,7 @@ if __name__ == '__main__':
     os.makedirs('static/models', exist_ok=True)
     os.makedirs('static/images/signs', exist_ok=True)
     os.makedirs('static/audio_cache', exist_ok=True)
-
-    print("SignAI web application")
-    print("Open: http://127.0.0.1:5000")
-    print("(Optional desktop UI: python signai_system.py)")
+    
+    print("🚀 SignAI Server Starting...")
+    print("🌐 URL: http://localhost:5000")
     app.run(debug=True, port=5000, host='0.0.0.0')

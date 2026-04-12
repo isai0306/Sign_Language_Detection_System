@@ -1,562 +1,549 @@
 {% extends "base.html" %}
-
 {% block title %}Text to Sign - SignAI{% endblock %}
 
 {% block extra_css %}
 <style>
 :root {
   --primary: #3b82f6;
-  --accent: #10b981;
-  --glass-bg: rgba(15, 23, 42, 0.7);
+  --accent:  #10b981;
+  --glass-bg: rgba(15, 23, 42, 0.72);
 }
 
-.mic-btn {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  border-radius: 99px;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s;
-}
+.tts-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
-.mic-btn:hover { background: rgba(59, 130, 246, 0.4); }
-.mic-btn.recording {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.4);
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-.text-to-sign-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.page-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
+/* ─── HEADER ─── */
+.page-header { text-align: center; margin-bottom: 2rem; }
 .page-header h1 {
-  font-size: 2.5rem;
-  color: var(--primary);
-  margin-bottom: 0.5rem;
+  font-size: 2.4rem; font-weight: 800;
+  background: linear-gradient(90deg, #f8fafc 20%, #3b82f6);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.page-header p { color: var(--text-muted); }
+
+/* ─── QUICK PHRASES ─── */
+.quick-phrases {
+  background: var(--glass-bg); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+  padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.quick-phrases h3 {
+  font-size: .82rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--primary); font-weight: 700; margin-bottom: .9rem;
+}
+.phrases-grid { display: flex; flex-wrap: wrap; gap: .55rem; }
+.phrase-chip {
+  background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3);
+  color: #93c5fd; border-radius: 99px; padding: .42rem .95rem;
+  font-size: .86rem; font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.phrase-chip:hover {
+  background: rgba(59,130,246,.35); color: #fff;
+  transform: translateY(-2px); box-shadow: 0 6px 14px rgba(59,130,246,.3);
 }
 
-.page-header p {
-  font-size: 1.1rem;
-  color: #64748b;
-}
-
-/* ================= INPUT SECTION ================= */
+/* ─── INPUT SECTION ─── */
 .input-section {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  padding: 2.5rem;
-  border-radius: 20px;
-  border: 1px solid rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
+  background: var(--glass-bg); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+  padding: 1.75rem; margin-bottom: 1.25rem;
 }
-
-.input-group {
-  margin-bottom: 1.5rem;
-}
-
-.input-group label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 0.8rem;
-  font-size: 1.1rem;
-}
-
+.input-row { display: flex; gap: .7rem; align-items: flex-start; margin-bottom: .7rem; }
 .text-input {
-  width: 100%;
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 120px;
-  transition: all 0.3s ease;
+  flex: 1; padding: .9rem 1rem; min-height: 90px;
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 14px; color: #f8fafc; font-size: 1.05rem; font-family: inherit; resize: vertical;
+  transition: border .25s;
 }
-
-.text-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+.text-input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,.1); }
+.mic-btn {
+  background: rgba(59,130,246,.2); color: #60a5fa;
+  border: 1.5px solid rgba(59,130,246,.4); border-radius: 14px;
+  padding: .8rem 1rem; font-size: 1.4rem; cursor: pointer;
+  transition: all .25s; align-self: stretch; display: flex; align-items: center;
 }
+.mic-btn.recording { background: rgba(239,68,68,.2); color: #f87171; border-color: rgba(239,68,68,.5); animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)} 50%{box-shadow:0 0 0 10px rgba(239,68,68,0)} }
 
-.word-count {
-  text-align: right;
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-}
-
+.action-row { display: flex; gap: .7rem; align-items: center; }
+.word-count { color: var(--text-muted); font-size: .86rem; margin-left: auto; }
 .convert-btn {
-  width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, var(--primary), #1e40af);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+  padding: .8rem 1.8rem; background: linear-gradient(135deg,#3b82f6,#2563eb);
+  color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: all .3s; box-shadow: 0 8px 20px rgba(59,130,246,.3);
 }
+.convert-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(59,130,246,.45); }
 
-.convert-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4);
+/* ─── TTS BAR ─── */
+.tts-bar {
+  background: var(--glass-bg); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+  padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.5rem; flex-wrap: wrap;
 }
+.tts-label { font-size: .82rem; color: var(--text-muted); font-weight: 700; letter-spacing: .05em; }
+.tts-text  { flex: 1; font-size: 1rem; color: #93c5fd; font-weight: 600; font-style: italic; min-width: 120px; }
+.tts-controls { display: flex; gap: .5rem; }
+.tts-btn { padding: .48rem .95rem; border-radius: 99px; border: none; font-weight: 700; cursor: pointer; font-size: .88rem; transition: all .2s; }
+.tts-speak { background: linear-gradient(135deg,#10b981,#059669); color:#fff; }
+.tts-stop  { background: rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.3); }
+.tts-speak:hover { transform: scale(1.04); }
+.voice-select { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#f8fafc; padding:.42rem .7rem; border-radius:8px; font-size:.85rem; }
 
-.convert-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ================= RESULTS SECTION ================= */
+/* ─── RESULTS ─── */
 .results-section {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  padding: 2.5rem;
-  border-radius: 20px;
-  border: 1px solid rgba(0,0,0,0.1);
-  display: none;
+  background: var(--glass-bg); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
+  padding: 2rem; display: none;
 }
-
-.results-section.active {
-  display: block;
-}
-
+.results-section.active { display: block; }
 .results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:1.25rem; padding-bottom:.9rem; border-bottom:1px solid rgba(255,255,255,.1);
 }
+.results-header h2 { font-size:1.45rem; color:var(--primary); }
+.input-display { background:rgba(59,130,246,.08); padding:.75rem 1rem; border-radius:10px; border-left:3px solid var(--primary); margin-bottom:1.5rem; color:#93c5fd; font-size:1rem; }
 
-.results-header h2 {
-  font-size: 1.8rem;
-  color: var(--primary);
-}
-
-.input-display {
-  background: rgba(37, 99, 235, 0.05);
-  padding: 1rem;
-  border-radius: 10px;
-  border-left: 4px solid var(--primary);
-  margin-bottom: 2rem;
-}
-
-.input-display .label {
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.input-display .text {
-  font-size: 1.2rem;
-  color: var(--primary);
-  font-weight: 600;
-}
-
-/* ================= SIGN DISPLAY ================= */
+/* ─── SIGN CARDS (REAL HAND VISUALS) ─── */
 .signs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1.1rem; margin-bottom: 1.5rem;
 }
-
 .sign-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
-  animation: fadeInUp 0.5s ease;
+  background: rgba(15,23,42,.65); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px; padding: 1.1rem; text-align: center;
+  transition: all .3s; animation: fadeUp .4s ease backwards;
+  cursor: default;
 }
+.sign-card:hover { transform: translateY(-6px); border-color: rgba(59,130,246,.4); box-shadow: 0 18px 36px rgba(59,130,246,.25); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
 
-.sign-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.sign-image {
-  width: 150px;
-  height: 150px;
-  margin: 0 auto 1rem;
-  background: #f1f5f9;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
+/* ── The real hand-shape visual area ── */
+.sign-visual {
+  width: 130px; height: 130px; margin: 0 auto .9rem;
+  border-radius: 14px; overflow: hidden; display: flex;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.07);
   position: relative;
-  overflow: hidden;
 }
+.sign-visual img { width:100%; height:100%; object-fit:cover; border-radius:14px; }
 
-.sign-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* ── Fallback: animated finger-pattern SVG card ── */
+.finger-card {
+  width: 100%; height: 100%; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:.35rem;
 }
-
-.sign-word {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 0.3rem;
+.finger-row { display:flex; gap:4px; align-items:flex-end; }
+.finger {
+  width: 14px; border-radius: 6px 6px 0 0;
+  background: rgba(148,163,184,.2); transition: all .4s;
 }
+.finger.up   { background: linear-gradient(180deg,#3b82f6,#06b6d4); box-shadow: 0 0 8px rgba(59,130,246,.5); }
+.finger.half { background: linear-gradient(180deg,#64748b,#475569); height: 22px !important; }
+.thumb { border-radius: 0 6px 6px 0; width: 16px; }
+.thumb.up { background: linear-gradient(90deg,#3b82f6,#06b6d4); box-shadow: 0 0 8px rgba(59,130,246,.5); }
+.palm-base { width:70px; height:12px; background: rgba(148,163,184,.15); border-radius:6px; margin-top:2px; }
+.conf-badge { font-size:.65rem; color:#60a5fa; font-weight:700; opacity:.7; }
 
-.sign-number {
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
+.gesture-label { font-size:.78rem; color:var(--primary); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-top:.4rem; }
+.sign-word { font-size:1.05rem; font-weight:700; color:#f8fafc; margin-bottom:.2rem; }
+.sign-num  { font-size:.78rem; color:var(--text-muted); }
 
-.no-sign-available {
-  background: #fef3c7;
-  border: 2px dashed #f59e0b;
-}
+/* ─── CONTROLS ─── */
+.playback-controls { display:flex; gap:.7rem; justify-content:center; flex-wrap:wrap; margin-top:1.5rem; }
+.ctrl-btn { padding:.72rem 1.35rem; border:none; border-radius:12px; font-weight:700; cursor:pointer; transition:all .3s; font-size:.94rem; }
+.btn-play  { background:var(--accent); color:#fff; }
+.btn-reset { background:#475569; color:#fff; }
+.btn-speak { background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; }
+.ctrl-btn:hover { transform:scale(1.04); }
 
-.no-sign-available .sign-image {
-  background: transparent;
-  color: #f59e0b;
-}
-
-/* ================= CONTROLS ================= */
-.playback-controls {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.control-button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-}
-
-.btn-play {
-  background: var(--accent);
-  color: white;
-}
-
-.btn-play:hover {
-  background: #16a34a;
-  transform: scale(1.05);
-}
-
-.btn-reset {
-  background: #64748b;
-  color: white;
-}
-
-.btn-reset:hover {
-  background: #475569;
-}
-
-.btn-save {
-  background: var(--primary);
-  color: white;
-}
-
-.btn-save:hover {
-  background: #1e40af;
-}
-
-/* ================= INFO BOX ================= */
-.info-box {
-  background: #dbeafe;
-  border-left: 4px solid var(--primary);
-  padding: 1.2rem;
-  border-radius: 10px;
-  margin-top: 2rem;
-}
-
-.info-box h3 {
-  color: var(--primary);
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
-}
-
-.info-box p {
-  color: #475569;
-  line-height: 1.6;
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-  .signs-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-  
-  .sign-image {
-    width: 120px;
-    height: 120px;
-  }
+@media(max-width:768px){
+  .signs-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.8rem}
+  .sign-visual{width:110px;height:110px}
+  .input-row{flex-direction:column}
+  .tts-bar{flex-direction:column;align-items:flex-start}
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="text-to-sign-container">
+<div class="tts-container">
+
   <div class="page-header">
-    <h1>✍️ Text to Sign Language</h1>
-    <p>Type your message and see it converted into sign language visuals</p>
+    <h1>✍️ Text → Sign Language</h1>
+    <p>Type, speak, or tap a quick phrase to see real hand gesture visuals with audio</p>
   </div>
 
-  <!-- Input Section -->
+  <!-- Quick Phrases -->
+  <div class="quick-phrases">
+    <h3>⚡ Day-to-Day Quick Phrases</h3>
+    <div class="phrases-grid">
+      <button class="phrase-chip" data-phrase="Good morning">☀️ Good Morning</button>
+      <button class="phrase-chip" data-phrase="Welcome">🎉 Welcome</button>
+      <button class="phrase-chip" data-phrase="Good night">🌙 Good Night</button>
+      <button class="phrase-chip" data-phrase="Thank you">🙏 Thank You</button>
+      <button class="phrase-chip" data-phrase="Hello how are you">👋 Hello &amp; How Are You</button>
+      <button class="phrase-chip" data-phrase="I am fine">😊 I Am Fine</button>
+      <button class="phrase-chip" data-phrase="Please help me">🆘 Please Help Me</button>
+      <button class="phrase-chip" data-phrase="I want water">💧 I Want Water</button>
+      <button class="phrase-chip" data-phrase="I want food">🍽️ I Want Food</button>
+      <button class="phrase-chip" data-phrase="Excuse me">🙋 Excuse Me</button>
+      <button class="phrase-chip" data-phrase="See you later">👋 See You Later</button>
+      <button class="phrase-chip" data-phrase="I love you">❤️ I Love You</button>
+      <button class="phrase-chip" data-phrase="Stop">🛑 Stop</button>
+      <button class="phrase-chip" data-phrase="Awesome nice together">🤩 Awesome &amp; Together</button>
+      <button class="phrase-chip" data-phrase="Yes no please">✋ Yes No Please</button>
+      <button class="phrase-chip" data-phrase="Sorry excuse me">🙇 Sorry / Excuse Me</button>
+    </div>
+  </div>
+
+  <!-- Input -->
   <div class="input-section">
     <form method="POST" action="{{ url_for('user.text_to_sign') }}" id="textForm">
-      <div class="input-group">
-        <label for="inputText">
-          <span>Enter Your Message</span>
-          <button type="button" id="micBtn" class="mic-btn">🎙️ Speak</button>
-        </label>
-        <textarea 
-          id="inputText" 
-          name="input_text" 
-          class="text-input" 
-          placeholder="Type your message here... (e.g., HELLO THANK YOU)"
-          required
-        >{{ input_text if input_text else '' }}</textarea>
-        <div class="word-count">
-          <span id="wordCount">0</span> words
-        </div>
+      <div class="input-row">
+        <textarea id="inputText" name="input_text" class="text-input"
+          placeholder="Type or speak your message… e.g. Hello Good Morning Thank You">{{ input_text if input_text else '' }}</textarea>
+        <button type="button" id="micBtn" class="mic-btn" title="Speak to type">🎙️</button>
       </div>
-
-      <button type="submit" class="convert-btn" id="convertBtn">
-        🔄 Convert to Sign Language
-      </button>
+      <div class="action-row">
+        <button type="submit" class="convert-btn">🔄 Convert to Signs</button>
+        <span class="word-count"><span id="wordCount">0</span> words</span>
+      </div>
     </form>
   </div>
 
-  <!-- Results Section -->
+  <!-- TTS Bar -->
+  <div class="tts-bar">
+    <span class="tts-label">🔊 TTS</span>
+    <span class="tts-text" id="ttsText">{{ input_text if input_text else 'Enter a phrase above…' }}</span>
+    <select class="voice-select" id="voiceSelect"></select>
+    <div class="tts-controls">
+      <button class="tts-btn tts-speak" id="ttsSpeakBtn">▶ Speak</button>
+      <button class="tts-btn tts-stop"  id="ttsStopBtn">■ Stop</button>
+    </div>
+  </div>
+
+  <!-- Results -->
   {% if show_result %}
   <div class="results-section active" id="resultsSection">
     <div class="results-header">
-      <h2>🎯 Sign Language Sequence</h2>
+      <h2>🤟 Sign Sequence</h2>
+      <button class="ctrl-btn btn-speak" onclick="speakCurrent()">🔊 Read Aloud</button>
     </div>
-
-    <div class="input-display">
-      <div class="label">Your Input:</div>
-      <div class="text">{{ input_text }}</div>
-    </div>
+    <div class="input-display">📝 {{ input_text }}</div>
 
     <div class="signs-grid" id="signsGrid">
       {% for word in words %}
-        <div class="sign-card">
-          <div class="sign-image">
-            {% if word.upper() == 'HELLO' %}
-              <img src="{{ url_for('static', filename='images/signs/hello.jpg') }}" alt="HELLO">
-            {% elif word.upper() == 'HELP' %}
-              <img src="{{ url_for('static', filename='images/signs/help.jpg') }}" alt="HELP">
-            {% elif word.upper() == 'YES' %}
-              <img src="{{ url_for('static', filename='images/signs/yes.jpg') }}" alt="YES">
-            {% elif word in gesture_data and gesture_data[word].image_path %}
-              <img src="{{ url_for('static', filename=gesture_data[word].image_path) }}" 
-                   alt="{{ word }}" 
-                   onerror="this.style.display='none'; this.parentElement.innerHTML='❓';">
-            {% else %}
-              ❓
-            {% endif %}
-          </div>
-          <div class="sign-word">{{ word }}</div>
-          <div class="sign-number">Sign {{ loop.index }}/{{ words|length }}</div>
+      <div class="sign-card" style="--i:{{ loop.index0 }}">
+
+        <div class="sign-visual" id="vis_{{ loop.index0 }}">
+          {# Try real image first #}
+          {% if word in gesture_data and gesture_data[word] and gesture_data[word].image_path %}
+            <img src="{{ url_for('static', filename=gesture_data[word].image_path) }}"
+                 alt="{{ word }}"
+                 onerror="this.style.display='none'; document.getElementById('fb_{{ loop.index0 }}').style.display='flex'">
+            <div id="fb_{{ loop.index0 }}" style="display:none;width:100%;height:100%">
+              {{ macros_finger(word) }}
+            </div>
+          {% else %}
+            {# Animated finger-pattern fallback #}
+            {% set wu = word | upper %}
+            <div class="finger-card">
+              {% if wu in ['HELLO','HI','WELCOME','NICE'] %}
+                <!-- ALL 5 FINGERS UP -->
+                <div class="finger-row">
+                  <div class="finger thumb up" style="height:32px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:56px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:44px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Open Palm</span>
+
+              {% elif wu in ['YES','CONFIDENT','BUSY','FIST'] %}
+                <!-- CLOSED FIST -->
+                <div class="finger-row">
+                  <div class="finger thumb half" style="height:22px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:24px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:20px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Closed Fist</span>
+
+              {% elif wu in ['HELP','I','INDEX','POINT'] %}
+                <!-- INDEX ONLY -->
+                <div class="finger-row">
+                  <div class="finger thumb" style="height:22px"></div>
+                  <div class="finger up" style="height:54px"></div>
+                  <div class="finger" style="height:20px"></div>
+                  <div class="finger" style="height:18px"></div>
+                  <div class="finger" style="height:16px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Index Up</span>
+
+              {% elif wu in ['PEACE','VICTORY','YOU'] %}
+                <!-- V / PEACE -->
+                <div class="finger-row">
+                  <div class="finger thumb" style="height:22px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:56px"></div>
+                  <div class="finger" style="height:20px"></div>
+                  <div class="finger" style="height:18px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">V Shape</span>
+
+              {% elif wu in ['GOOD','AWESOME','THUMBS','THUMBS_UP','GOOD_MORNING','MORNING'] %}
+                <!-- THUMBS UP -->
+                <div class="finger-row">
+                  <div class="finger thumb up" style="height:44px;transform:rotate(-20deg)"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:24px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:20px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Thumbs Up</span>
+
+              {% elif wu in ['WRONG','BAD','NO'] %}
+                <!-- THUMBS DOWN -->
+                <div class="finger-row">
+                  <div class="finger thumb" style="height:22px;background:rgba(239,68,68,.6)"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:24px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:20px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Thumbs Down</span>
+
+              {% elif wu in ['THANK','THANK_YOU','PLEASE','SORRY'] %}
+                <!-- 4 FINGERS -->
+                <div class="finger-row">
+                  <div class="finger thumb" style="height:22px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:56px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:44px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">4 Fingers</span>
+
+              {% elif wu in ['LOVE','ILY','I_LOVE_YOU'] %}
+                <!-- ILY: Thumb + Index + Pinky -->
+                <div class="finger-row">
+                  <div class="finger thumb up" style="height:36px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:20px"></div>
+                  <div class="finger up" style="height:44px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">ILY ❤️</span>
+
+              {% elif wu in ['WATER','W','AEROPLANE'] %}
+                <!-- 3 FINGERS: Thumb + Index + Middle -->
+                <div class="finger-row">
+                  <div class="finger thumb up" style="height:32px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:56px"></div>
+                  <div class="finger" style="height:20px"></div>
+                  <div class="finger" style="height:18px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">W Shape</span>
+
+              {% elif wu in ['CALL','CALL_ME','PHONE'] %}
+                <!-- CALL ME: Thumb + Pinky -->
+                <div class="finger-row">
+                  <div class="finger thumb up" style="height:38px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger" style="height:22px"></div>
+                  <div class="finger up" style="height:46px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Call Me 🤙</span>
+
+              {% elif wu in ['TOGETHER','AND','WITH'] %}
+                <!-- 3 MIDDLE fingers -->
+                <div class="finger-row">
+                  <div class="finger thumb" style="height:22px"></div>
+                  <div class="finger up" style="height:50px"></div>
+                  <div class="finger up" style="height:56px"></div>
+                  <div class="finger up" style="height:50px"></div>
+                  <div class="finger" style="height:18px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">Together</span>
+
+              {% elif wu == 'STOP' %}
+                <!-- ALL 5 (STOP) -->
+                <div class="finger-row">
+                  <div class="finger thumb up" style="height:34px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:56px"></div>
+                  <div class="finger up" style="height:52px"></div>
+                  <div class="finger up" style="height:44px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">STOP ✋</span>
+
+              {% else %}
+                <!-- GENERIC: Letter silhouette -->
+                <div style="font-size:3rem;color:#475569;line-height:1">{{ word[0].upper() }}</div>
+                <div class="finger-row" style="margin-top:6px">
+                  <div class="finger up" style="height:30px"></div>
+                  <div class="finger up" style="height:36px"></div>
+                  <div class="finger up" style="height:36px"></div>
+                  <div class="finger" style="height:20px"></div>
+                  <div class="finger" style="height:18px"></div>
+                </div>
+                <div class="palm-base"></div>
+                <span class="gesture-label">{{ wu[:8] }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
         </div>
+
+        <div class="sign-word">{{ word.upper() }}</div>
+        <div class="sign-num">{{ loop.index }} / {{ words|length }}</div>
+      </div>
       {% endfor %}
     </div>
 
     <div class="playback-controls">
-      <button class="control-button btn-play" onclick="playSequence()">
-        ▶️ Play Sequence
-      </button>
-      <button class="control-button btn-reset" onclick="resetForm()">
-        🔄 Reset
-      </button>
-      <button class="control-button btn-save" onclick="saveSequence()">
-        💾 Save Sequence
-      </button>
-    </div>
-
-    <div class="info-box">
-      <h3>ℹ️ How to Use</h3>
-      <p>
-        The signs are displayed in the order of your input text. 
-        Available sign images: HELLO, HELP, YES. Other words show emoji representations or ❓ if not available.
-        Click "Play Sequence" to see an animated version. 
-        Some words may not have sign representations yet.
-      </p>
+      <button class="ctrl-btn btn-play"  onclick="playSequence()">▶️ Animate</button>
+      <button class="ctrl-btn btn-speak" onclick="speakCurrent()">🔊 Read Aloud</button>
+      <button class="ctrl-btn btn-reset" onclick="resetForm()">🔄 Reset</button>
     </div>
   </div>
   {% endif %}
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Word counter
-const inputText = document.getElementById('inputText');
+const inputText   = document.getElementById('inputText');
+const wordCount   = document.getElementById('wordCount');
+const micBtn      = document.getElementById('micBtn');
+const ttsText     = document.getElementById('ttsText');
+const voiceSelect = document.getElementById('voiceSelect');
+const ttsSpeakBtn = document.getElementById('ttsSpeakBtn');
+const ttsStopBtn  = document.getElementById('ttsStopBtn');
 
-const wordCount = document.getElementById('wordCount');
+function updateWordCount() {
+  const t = inputText.value.trim();
+  wordCount.textContent = t ? t.split(/\s+/).length : 0;
+  ttsText.textContent = t || 'Enter a phrase above…';
+}
+inputText.addEventListener('input', updateWordCount);
+updateWordCount();
 
-inputText.addEventListener('input', () => {
-  const text = inputText.value.trim();
-  const words = text ? text.split(/\s+/).length : 0;
-  wordCount.textContent = words;
+// Quick phrase chips
+document.querySelectorAll('.phrase-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    inputText.value = btn.dataset.phrase;
+    updateWordCount();
+    inputText.focus();
+  });
 });
 
-// Initialize word count on load
-if (inputText.value) {
-  const text = inputText.value.trim();
-  const words = text ? text.split(/\s+/).length : 0;
-  wordCount.textContent = words;
-}
-
-// Web Speech API
+// Speech-to-Text
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const micBtn = document.getElementById('micBtn');
-
 if (SpeechRecognition) {
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
-  
-  let isRecording = false;
-  
-  micBtn.addEventListener('click', () => {
-    if (isRecording) {
-      recognition.stop();
-    } else {
-      recognition.start();
-    }
-  });
+  let recording = false;
 
-  recognition.onstart = () => {
-    isRecording = true;
-    micBtn.classList.add('recording');
-    micBtn.innerHTML = '🔴 Listening...';
-  };
+  micBtn.addEventListener('click', () => recording ? recognition.stop() : recognition.start());
 
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    inputText.value += (inputText.value.length ? ' ' : '') + transcript;
-    
-    // Update word count
-    const text = inputText.value.trim();
-    wordCount.textContent = text ? text.split(/\s+/).length : 0;
+  recognition.onstart = () => { recording = true;  micBtn.classList.add('recording');    micBtn.innerHTML = '🔴'; };
+  recognition.onresult = e => {
+    const t = e.results[0][0].transcript;
+    inputText.value += (inputText.value ? ' ' : '') + t;
+    updateWordCount();
   };
-
-  recognition.onend = () => {
-    isRecording = false;
-    micBtn.classList.remove('recording');
-    micBtn.innerHTML = '🎙️ Speak';
-  };
+  recognition.onend = () => { recording = false; micBtn.classList.remove('recording'); micBtn.innerHTML = '🎙️'; };
 } else {
-  micBtn.style.display = 'none'; // Hide if not supported
+  micBtn.style.display = 'none';
 }
 
-// Play sequence animation
-let currentIndex = 0;
-let playInterval = null;
+// TTS
+let voices = [];
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = '';
+  voices.forEach((v, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = `${v.name} (${v.lang})`;
+    if (v.lang.startsWith('en')) voiceSelect.value = i;
+    voiceSelect.appendChild(o);
+  });
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function speak(text) {
+  if (!text || !speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = voices[parseInt(voiceSelect.value)];
+  if (v) u.voice = v;
+  u.rate = 0.95; u.pitch = 1.05;
+  u.onstart = () => ttsSpeakBtn.textContent = '🔊 Speaking…';
+  u.onend   = () => ttsSpeakBtn.textContent = '▶ Speak';
+  speechSynthesis.speak(u);
+}
+
+function speakCurrent() {
+  const t = inputText.value.trim() || ttsText.textContent;
+  speak(t);
+}
+
+ttsSpeakBtn.addEventListener('click', speakCurrent);
+ttsStopBtn.addEventListener('click', () => { speechSynthesis.cancel(); ttsSpeakBtn.textContent = '▶ Speak'; });
+
+// Animate sequence
+let idx = 0, timer = null;
 
 function playSequence() {
   const cards = document.querySelectorAll('.sign-card');
-  if (cards.length === 0) return;
-  
-  // Reset
-  cards.forEach(card => {
-    card.style.transform = 'scale(1)';
-    card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
-  });
-  
-  currentIndex = 0;
-  
-  if (playInterval) {
-    clearInterval(playInterval);
-  }
-  
-  playInterval = setInterval(() => {
-    // Reset previous
-    if (currentIndex > 0) {
-      cards[currentIndex - 1].style.transform = 'scale(1)';
-      cards[currentIndex - 1].style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
-    }
-    
-    // Highlight current
-    if (currentIndex < cards.length) {
-      cards[currentIndex].style.transform = 'scale(1.1)';
-      cards[currentIndex].style.boxShadow = '0 20px 50px rgba(37, 99, 235, 0.3)';
-      cards[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      currentIndex++;
+  if (!cards.length) return;
+  cards.forEach(c => { c.style.transform = ''; c.style.boxShadow = ''; });
+  idx = 0;
+  if (timer) clearInterval(timer);
+
+  const txt = document.querySelector('.input-display');
+  if (txt) speak(txt.textContent.replace('📝 ', ''));
+
+  timer = setInterval(() => {
+    if (idx > 0) { cards[idx-1].style.transform=''; cards[idx-1].style.boxShadow=''; }
+    if (idx < cards.length) {
+      cards[idx].style.transform = 'scale(1.13)';
+      cards[idx].style.boxShadow = '0 20px 40px rgba(59,130,246,.45)';
+      cards[idx].scrollIntoView({ behavior:'smooth', block:'nearest' });
+      idx++;
     } else {
-      // End of sequence
-      clearInterval(playInterval);
-      cards[cards.length - 1].style.transform = 'scale(1)';
-      cards[cards.length - 1].style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
+      clearInterval(timer);
+      if (cards.length) { cards[cards.length-1].style.transform=''; cards[cards.length-1].style.boxShadow=''; }
     }
-  }, 1500);
+  }, 1200);
 }
 
-// Reset form
 function resetForm() {
-  if (confirm('This will clear your current input. Continue?')) {
-    window.location.href = "{{ url_for('user.text_to_sign') }}";
-  }
+  if (confirm('Clear current input?')) window.location.href = "{{ url_for('user.text_to_sign') }}";
 }
 
-// Save sequence
-function saveSequence() {
-  alert('Sequence saved to your history! You can view it anytime in your profile.');
-  // In a real implementation, this would save to database
-}
-
-// Cleanup on page unload
 window.addEventListener('beforeunload', () => {
-  if (playInterval) {
-    clearInterval(playInterval);
-  }
+  if (timer) clearInterval(timer);
+  speechSynthesis.cancel();
 });
 </script>
 {% endblock %}

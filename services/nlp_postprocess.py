@@ -6,6 +6,7 @@ from typing import List
 
 _GESTURE_PHRASE = {
     "HELLO": "hello",
+    "HI": "hi",
     "THANK_YOU": "thank you",
     "THANK YOU": "thank you",
     "YES": "yes",
@@ -23,6 +24,29 @@ _GESTURE_PHRASE = {
     "SOS": "emergency",
     "DANGER": "danger",
     "TOILET": "the restroom",
+    # Phase 2 gestures
+    "PEACE": "peace",
+    "THUMBS_UP": "good",
+    "CALL_ME": "call me",
+    "LOVE": "I love you",
+    "STOP": "stop",
+    # Reference image gestures
+    "WRONG": "wrong",
+    "NICE": "nice",
+    "ACCIDENT": "accident",
+    "AEROPLANE": "aeroplane",
+    "BUSY": "busy",
+    "AWESOME": "awesome",
+    "TOGETHER": "together",
+    "CONFIDENT": "confident",
+    # Day-to-day phrases
+    "GOOD_MORNING": "good morning",
+    "WELCOME": "welcome",
+    "GOOD_NIGHT": "good night",
+    "EXCUSE_ME": "excuse me",
+    "I_AM_FINE": "I am fine",
+    "HOW_ARE_YOU": "how are you",
+    "SEE_YOU_LATER": "see you later",
     "UNKNOWN": "",
 }
 

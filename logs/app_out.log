@@ -1,0 +1,5 @@
+SignAI web application
+Open: http://127.0.0.1:5000
+(Optional desktop UI: python signai_system.py)
+ * Serving Flask app 'app'
+ * Debug mode: on

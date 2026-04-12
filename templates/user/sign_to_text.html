@@ -237,7 +237,7 @@
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const frame = canvas.toDataURL('image/jpeg', 0.82);
+    const frame = canvas.toDataURL('image/jpeg', 0.88);
     try {
       const res = await fetch('/api/detect-gesture', {
         method: 'POST',
@@ -246,42 +246,64 @@
       });
       const data = await res.json();
       if (!data.success) return;
+
+      // Always show annotated frame overlay (bounding boxes + skeleton)
       if (data.annotated_frame) {
         overlay.src = data.annotated_frame;
         overlay.classList.add('on');
+      } else {
+        overlay.classList.remove('on');
       }
+
+      // Emergency
       if (data.is_emergency) {
         emergencyStrip.classList.add('on');
         emergencyModal.classList.add('on');
       } else {
         emergencyStrip.classList.remove('on');
       }
-      if (data.gesture) {
-        gestureOut.textContent = data.gesture.replace(/_/g, ' ');
-        const p = Math.round((data.confidence || 0) * 100);
+
+      // Show raw_gesture immediately so users see live feedback even before voting stabilizes
+      const displayGesture = data.gesture || data.raw_gesture;
+      const displayConf = data.gesture ? data.confidence : (data.confidence || 0) * 0.7;
+
+      if (displayGesture && displayGesture !== 'UNKNOWN') {
+        gestureOut.textContent = displayGesture.replace(/_/g, ' ');
+        const p = Math.round(displayConf * 100);
         confOut.textContent = p + '%';
         confBar.style.width = p + '%';
+        // Color the bar by confidence level
+        const color = p >= 80 ? '#10b981' : p >= 60 ? '#f59e0b' : '#3b82f6';
+        confBar.style.background = `linear-gradient(90deg, ${color}, ${color}88)`;
+      } else if (!displayGesture) {
+        gestureOut.textContent = '👐 Show your hand…';
+        confOut.textContent = '—';
+        confBar.style.width = '0%';
       }
-      sentenceOut.textContent = data.sentence || data.display_text || '—';
-      if (data.translations) {
-        taOut.textContent = data.translations.tamil || '—';
-        hiOut.textContent = data.translations.hindi || '—';
-      }
-      if (data.audio_paths && Object.keys(data.audio_paths).length) {
-        const p = Object.values(data.audio_paths)[0];
-        lastAudio = '/static/' + p;
-        playBtn.disabled = false;
-        audioLabel.textContent = 'Audio ready';
-        if (data.gesture && data.gesture !== lastSpokenGesture) {
-          lastSpokenGesture = data.gesture;
-          const a = new Audio(lastAudio);
-          a.onplay = () => setAudioPlaying(true);
-          a.onended = () => setAudioPlaying(false);
-          a.play().catch(() => {});
-          audioEl = a;
+
+      // Only update sentence/translations when we have a confirmed final gesture
+      if (data.gesture) {
+        sentenceOut.textContent = data.sentence || data.display_text || '—';
+        if (data.translations) {
+          taOut.textContent = data.translations.tamil || '—';
+          hiOut.textContent = data.translations.hindi || '—';
+        }
+        if (data.audio_paths && Object.keys(data.audio_paths).length) {
+          const p = Object.values(data.audio_paths)[0];
+          lastAudio = '/static/' + p;
+          playBtn.disabled = false;
+          audioLabel.textContent = 'Audio ready';
+          if (data.gesture !== lastSpokenGesture) {
+            lastSpokenGesture = data.gesture;
+            const a = new Audio(lastAudio);
+            a.onplay  = () => setAudioPlaying(true);
+            a.onended = () => setAudioPlaying(false);
+            a.play().catch(() => {});
+            audioEl = a;
+          }
         }
       }
-    } catch (e) { console.warn(e); }
+    } catch (e) { console.warn('tick error:', e); }
   }
 
   playBtn.addEventListener('click', () => {
