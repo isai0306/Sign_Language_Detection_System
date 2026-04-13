@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Modern SignAI Visualizer{% endblock %}
+
+{% block extra_css %}
+<style>
+  #modern-root-container {
+    width: 100%;
+    min-height: 80vh;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Override base container padding for total immersion */
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="modern-root-container">
+  <div id="root"></div>
+</div>
+
+<!-- During development, we can point to the Vite dev server -->
+<!-- When you run 'npm run build' in the frontend folder, this will point to the manifest/assets -->
+<script type="module">
+  // Detection for vite dev server vs production
+  const IS_DEV = true; // Toggle this or use a logic
+  
+  if (IS_DEV) {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'http://localhost:5173/src/main.jsx';
+    document.body.appendChild(script);
+  }
+</script>
+{% endblock %}

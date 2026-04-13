@@ -181,8 +181,17 @@ def text_to_sign():
                 if close:
                     match = name_to_row.get(close[0])
             if match:
+                # Check for animation variants
+                anim_path = None
+                for ext in ['mp4', 'gif', 'png', 'webp']:
+                    test_rel = f"sign_animations/{key.lower()}.{ext}"
+                    if os.path.exists(os.path.join(Config.STATIC_FOLDER, test_rel)):
+                        anim_path = test_rel
+                        break
+
                 sign_data[key] = {
                     "image": match["image_path"],
+                    "animation": anim_path,
                     "description": match["description"],
                     "found": True,
                     "matched_as": match["gesture_name"],
@@ -190,6 +199,7 @@ def text_to_sign():
             else:
                 sign_data[key] = {
                     "image": None,
+                    "animation": None,
                     "description": "Sign not in library — showing text fallback",
                     "found": False,
                     "matched_as": None,

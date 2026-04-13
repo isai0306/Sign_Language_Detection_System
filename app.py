@@ -28,6 +28,11 @@ def home():
 def about():
     return render_template('about.html')
 
+@app.route('/modern-sign')
+def modern_sign():
+    # This page will host the React-based Advanced Visualization component
+    return render_template('modern_sign.html')
+
 @app.context_processor
 def inject_user():
     return dict(

@@ -124,6 +124,7 @@ def text_to_sign():
                     FROM gestures WHERE UPPER(gesture_name) = %s
                 """, (word,))
                 result = cursor.fetchone()
+
                 if not result:
                     # Try underscore version (e.g. GOOD_MORNING)
                     cursor.execute("""
@@ -131,6 +132,31 @@ def text_to_sign():
                         FROM gestures WHERE UPPER(REPLACE(gesture_name,' ','_')) = %s
                     """, (word.replace(' ', '_'),))
                     result = cursor.fetchone()
+
+                # Check for realistic replacement in sign_animations or signs
+                if not result:
+                    # Fallback for common words if not in DB
+                    common_map = {
+                        'HI': 'images/signs/hi.png',
+                        'HELLO': 'images/signs/hi.png',
+                        'OK': 'images/signs/ok.png',
+                    }
+                    if word in common_map:
+                        result = {
+                            'gesture_name': word,
+                            'image_path': common_map[word],
+                            'description': f'Realistic {word} gesture'
+                        }
+                
+                # Double check file exists
+                if result and result.get('image_path'):
+                    full_p = os.path.join(Config.STATIC_FOLDER, result['image_path'])
+                    if not os.path.exists(full_p):
+                        # try sign_animations
+                        test_anim = f"sign_animations/{word.lower()}.png"
+                        if os.path.exists(os.path.join(Config.STATIC_FOLDER, test_anim)):
+                            result['image_path'] = test_anim
+
                 gesture_data[word] = result if result else None
             
             cursor.close()
