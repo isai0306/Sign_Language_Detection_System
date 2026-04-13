@@ -233,185 +233,33 @@
     <div class="input-display">📝 {{ input_text }}</div>
 
     <div class="signs-grid" id="signsGrid">
-      {% for word in words %}
+      {% for unit in sign_units %}
       <div class="sign-card" style="--i:{{ loop.index0 }}">
-
         <div class="sign-visual" id="vis_{{ loop.index0 }}">
-          {# Try real image first #}
-          {% if word in gesture_data and gesture_data[word] and gesture_data[word].image_path %}
-            <img src="{{ url_for('static', filename=gesture_data[word].image_path) }}"
-                 alt="{{ word }}"
-                 onerror="this.style.display='none'; document.getElementById('fb_{{ loop.index0 }}').style.display='flex'">
-            <div id="fb_{{ loop.index0 }}" style="display:none;width:100%;height:100%">
-              {{ macros_finger(word) }}
-            </div>
+          {% if unit.video_url %}
+          <video
+            src="{{ unit.video_url }}"
+            autoplay
+            loop
+            muted
+            playsinline
+            controls
+            preload="metadata"
+            style="width:100%;height:100%;object-fit:cover;border-radius:14px;">
+          </video>
+          {% elif unit.image_path %}
+          <img src="{{ url_for('static', filename=unit.image_path) }}" alt="{{ unit.label }}">
           {% else %}
-            {# Animated finger-pattern fallback #}
-            {% set wu = word | upper %}
-            <div class="finger-card">
-              {% if wu in ['HELLO','HI','WELCOME','NICE'] %}
-                <!-- ALL 5 FINGERS UP -->
-                <div class="finger-row">
-                  <div class="finger thumb up" style="height:32px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:56px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:44px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Open Palm</span>
-
-              {% elif wu in ['YES','CONFIDENT','BUSY','FIST'] %}
-                <!-- CLOSED FIST -->
-                <div class="finger-row">
-                  <div class="finger thumb half" style="height:22px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:24px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:20px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Closed Fist</span>
-
-              {% elif wu in ['HELP','I','INDEX','POINT'] %}
-                <!-- INDEX ONLY -->
-                <div class="finger-row">
-                  <div class="finger thumb" style="height:22px"></div>
-                  <div class="finger up" style="height:54px"></div>
-                  <div class="finger" style="height:20px"></div>
-                  <div class="finger" style="height:18px"></div>
-                  <div class="finger" style="height:16px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Index Up</span>
-
-              {% elif wu in ['PEACE','VICTORY','YOU'] %}
-                <!-- V / PEACE -->
-                <div class="finger-row">
-                  <div class="finger thumb" style="height:22px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:56px"></div>
-                  <div class="finger" style="height:20px"></div>
-                  <div class="finger" style="height:18px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">V Shape</span>
-
-              {% elif wu in ['GOOD','AWESOME','THUMBS','THUMBS_UP','GOOD_MORNING','MORNING'] %}
-                <!-- THUMBS UP -->
-                <div class="finger-row">
-                  <div class="finger thumb up" style="height:44px;transform:rotate(-20deg)"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:24px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:20px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Thumbs Up</span>
-
-              {% elif wu in ['WRONG','BAD','NO'] %}
-                <!-- THUMBS DOWN -->
-                <div class="finger-row">
-                  <div class="finger thumb" style="height:22px;background:rgba(239,68,68,.6)"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:24px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:20px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Thumbs Down</span>
-
-              {% elif wu in ['THANK','THANK_YOU','PLEASE','SORRY'] %}
-                <!-- 4 FINGERS -->
-                <div class="finger-row">
-                  <div class="finger thumb" style="height:22px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:56px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:44px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">4 Fingers</span>
-
-              {% elif wu in ['LOVE','ILY','I_LOVE_YOU'] %}
-                <!-- ILY: Thumb + Index + Pinky -->
-                <div class="finger-row">
-                  <div class="finger thumb up" style="height:36px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:20px"></div>
-                  <div class="finger up" style="height:44px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">ILY ❤️</span>
-
-              {% elif wu in ['WATER','W','AEROPLANE'] %}
-                <!-- 3 FINGERS: Thumb + Index + Middle -->
-                <div class="finger-row">
-                  <div class="finger thumb up" style="height:32px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:56px"></div>
-                  <div class="finger" style="height:20px"></div>
-                  <div class="finger" style="height:18px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">W Shape</span>
-
-              {% elif wu in ['CALL','CALL_ME','PHONE'] %}
-                <!-- CALL ME: Thumb + Pinky -->
-                <div class="finger-row">
-                  <div class="finger thumb up" style="height:38px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger" style="height:22px"></div>
-                  <div class="finger up" style="height:46px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Call Me 🤙</span>
-
-              {% elif wu in ['TOGETHER','AND','WITH'] %}
-                <!-- 3 MIDDLE fingers -->
-                <div class="finger-row">
-                  <div class="finger thumb" style="height:22px"></div>
-                  <div class="finger up" style="height:50px"></div>
-                  <div class="finger up" style="height:56px"></div>
-                  <div class="finger up" style="height:50px"></div>
-                  <div class="finger" style="height:18px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">Together</span>
-
-              {% elif wu == 'STOP' %}
-                <!-- ALL 5 (STOP) -->
-                <div class="finger-row">
-                  <div class="finger thumb up" style="height:34px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:56px"></div>
-                  <div class="finger up" style="height:52px"></div>
-                  <div class="finger up" style="height:44px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">STOP ✋</span>
-
-              {% else %}
-                <!-- GENERIC: Letter silhouette -->
-                <div style="font-size:3rem;color:#475569;line-height:1">{{ word[0].upper() }}</div>
-                <div class="finger-row" style="margin-top:6px">
-                  <div class="finger up" style="height:30px"></div>
-                  <div class="finger up" style="height:36px"></div>
-                  <div class="finger up" style="height:36px"></div>
-                  <div class="finger" style="height:20px"></div>
-                  <div class="finger" style="height:18px"></div>
-                </div>
-                <div class="palm-base"></div>
-                <span class="gesture-label">{{ wu[:8] }}</span>
-              {% endif %}
-            </div>
+          <div class="finger-card">
+            <div style="font-size:2.4rem;color:#475569;line-height:1">{{ unit.label[0] if unit.label else '?' }}</div>
+            <div class="palm-base"></div>
+            <span class="gesture-label">No clip</span>
+          </div>
           {% endif %}
         </div>
 
-        <div class="sign-word">{{ word.upper() }}</div>
-        <div class="sign-num">{{ loop.index }} / {{ words|length }}</div>
+        <div class="sign-word">{{ unit.label }}</div>
+        <div class="sign-num">{{ loop.index }} / {{ sign_units|length }}</div>
       </div>
       {% endfor %}
     </div>

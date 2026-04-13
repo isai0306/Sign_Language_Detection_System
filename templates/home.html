@@ -1,581 +1,119 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Sign Language Translation System</title>
-  <meta name="description" content="AI-powered sign language translation system enabling real-time communication and multilingual support." />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-/* ================= RESET & BASE ================= */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+{% extends "base.html" %}
 
-:root {
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --accent: #10b981;
-  --danger: #ef4444;
-  --text-dark: #f8fafc;
-  --text-muted: #94a3b8;
-  --bg-page: #0b0f19;
-  --glass-bg: rgba(15, 23, 42, 0.75);
-  --border-soft: rgba(255, 255, 255, 0.1);
-}
+{% block title %}SignAI - AI Sign Language Translation{% endblock %}
 
-body {
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  color: var(--text-dark);
-  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
-  line-height: 1.7;
-  overflow-x: hidden;
-  background-attachment: fixed;
-}
-
-/* ================= LINKS ================= */
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* ================= BUTTONS ================= */
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: #fff;
-  padding: 0.8rem 1.6rem;
-  border-radius: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.45);
-}
-
-.btn-secondary {
-  font-weight: 600;
-  color: var(--primary);
-  margin-right: 1rem;
-}
-
-.btn-outline {
-  border: 2px solid var(--primary);
-  color: var(--primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  background: transparent;
-  transition: all 0.3s ease;
-}
-
-.btn-outline:hover {
-  background: var(--primary);
-  color: #fff;
-}
-
-/* ================= HERO ================= */
-.hero {
-  padding: 2.5rem 5rem 5rem;
-  position: relative;
-}
-
-.hero::before {
-  content: "";
-  position: absolute;
-  top: -200px;
-  right: -200px;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(37,99,235,0.25), transparent 70%);
-  z-index: -1;
-}
-
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--primary);
-  letter-spacing: 0.5px;
-}
-
-.hero-content {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 4rem;
-  margin-top: 4rem;
-  align-items: center;
-}
-
-.hero-text h1 {
-  font-size: 3.2rem;
-  line-height: 1.15;
-  font-weight: 800;
-  background: linear-gradient(90deg, #f8fafc, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.hero-text p {
-  margin-top: 1.4rem;
-  font-size: 1.15rem;
-  color: var(--text-muted);
-  max-width: 520px;
-}
-
-.hero-cta {
-  display: flex;
-  gap: 1.2rem;
-  margin-top: 2rem;
-}
-
-/* ================= HERO IMAGE ================= */
-.hero-image img {
-  width: 100%;
-  border-radius: 20px;
-  box-shadow:
-    0 30px 70px rgba(0, 0, 0, 0.15),
-    inset 0 0 0 1px var(--border-soft);
-}
-
-/* ================= SECTIONS ================= */
-.section {
-  padding: 5rem;
-  position: relative;
-}
-
-.soft-bg {
-  background: var(--glass-bg);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--border-soft);
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.section-title {
-  font-size: 2.2rem;
-  text-align: center;
-  margin-bottom: 3rem;
-  font-weight: 700;
-}
-
-/* ================= GRID ================= */
-.grid {
-  display: grid;
-  gap: 2.5rem;
-}
-
-.grid.two {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.grid.three {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.grid.four {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-/* ================= CARDS ================= */
-.card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(18px);
-  padding: 2.4rem;
-  border-radius: 20px;
-  border: 1px solid var(--border-soft);
-  box-shadow: 0 25px 60px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 35px 80px rgba(0,0,0,0.12);
-}
-
-.card h3 {
-  margin-bottom: 0.8rem;
-  font-size: 1.25rem;
-}
-
-.card p {
-  color: var(--text-muted);
-}
-
-.card.small {
-  text-align: center;
-  font-weight: 600;
-  font-size: 1.05rem;
-}
-
-/* ================= FEATURES ================= */
-.feature-list {
-  list-style: none;
-}
-
-.feature-list li {
-  margin-bottom: 1.2rem;
-  font-size: 1.05rem;
-  padding-left: 1.8rem;
-  position: relative;
-}
-
-.feature-list li::before {
-  content: "✔";
-  position: absolute;
-  left: 0;
-  color: var(--accent);
-  font-weight: bold;
-}
-
-/* ================= IMPACT ================= */
-.impact {
-  text-align: center;
-  max-width: 720px;
-  margin: auto;
-}
-
-.impact h2 {
-  font-size: 2.1rem;
-  margin-bottom: 1rem;
-}
-
-.impact p {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-}
-
-/* ================= FOOTER ================= */
-.footer {
-  padding: 3rem 2rem;
-  background: linear-gradient(135deg, #0f172a, #020617);
-  color: #e5e7eb;
-  text-align: center;
-}
-
-.footer .small {
-  margin-top: 0.6rem;
-  font-size: 0.85rem;
-  opacity: 0.75;
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 1024px) {
+{% block extra_css %}
+<style>
   .hero {
-    padding: 2rem 3rem 4rem;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--space-4);
+    align-items: center;
+    margin-bottom: var(--space-5);
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--space-2);
+  }
+
+  .hero p {
+    color: var(--neutral-600);
+    margin: 0 0 var(--space-3);
+    max-width: 56ch;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .hero-media img {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    border: var(--border);
   }
 
   .section {
-    padding: 4rem 3rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .hero-content {
-    grid-template-columns: 1fr;
-    gap: 3rem;
+    margin-bottom: var(--space-5);
   }
 
-  .grid.two,
-  .grid.three,
-  .grid.four {
-    grid-template-columns: 1fr;
+  .section h2 {
+    font-size: clamp(1.375rem, 2.8vw, 2rem);
+    margin: 0 0 var(--space-3);
+    letter-spacing: -0.01em;
   }
 
-  .hero-text h1 {
-    font-size: 2.4rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .hero {
-    padding: 2rem;
+  .feature-item h3 {
+    margin: 0 0 var(--space-1);
+    font-size: 1.1rem;
   }
 
-  .section {
-    padding: 3rem 2rem;
+  .feature-item p {
+    margin: 0;
+    color: var(--neutral-600);
   }
 
-  .hero-text h1 {
-    font-size: 2rem;
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
   }
-}
 </style>
+{% endblock %}
 
-</head>
-
-<body>
-
-  <!-- ================= HERO SECTION ================= -->
-  <header class="hero">
-    <nav class="navbar">
-      <div class="logo">SignAI</div>
-      <div class="nav-actions">
-        <a href="{{ url_for('auth.admin_login') }}" class="btn-secondary">Admin login</a>
-        <a href="{{ url_for('auth.user_register') }}" class="btn-secondary">Register</a>
-                <a href="{{ url_for('auth.user_login') }}" class="btn-primary">User login</a>
-      </div>
-    </nav>
-
-    <div class="hero-content">
-      <div class="hero-text">
-        <h1>Breaking Communication <br>Barriers with AI</h1>
-        <p>
-          An intelligent sign language translation system that converts gestures into
-          text and speech.
-        </p>
-
-        <div class="hero-cta">
-          <a href="{{ url_for('auth.user_login') }}" class="btn-primary">Get Started</a>
-          <a href="{{ url_for('auth.admin_login') }}" class="btn-outline"><span>🧰</span>Admin</a>
-        </div>
-      </div>
-
-      <div class="hero-image">
-        <img 
-          src="{{ url_for('static', filename='image/home.png') }}" 
-          alt="Deaf person using sign language in front of a camera with AI hand landmarks and text translation overlay" 
-        />
-      </div>
-    </div>
-  </header>
-
-  <!-- ================= HOW IT WORKS ================= -->
-  <section class="section">
-    <h2 class="section-title">How It Works</h2>
-
-    <div class="grid three">
-      <div class="card">
-        <h3>Sign → Text → Audio</h3>
-        <p>
-          Hand gestures are detected using AI and instantly converted into readable
-          text and spoken output in Tamil or Hindi.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Text → Sign Response</h3>
-        <p>
-          Normal users can type responses which are visually converted into sign
-          language for two-way communication.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= FEATURES ================= -->
-  <section class="section soft-bg">
-    <h2 class="section-title">Key Features</h2>
-
-    <div class="grid two">
-      <ul class="feature-list">
-        <li>✔ Real-time sign language recognition</li>
-        <li>✔ Tamil & Hindi language support</li>
-      </ul>
-
-      <ul class="feature-list">
-        <li>✔ Secure role-based login (User & Admin)</li>
-        <li>✔ Admin dashboard & monitoring</li>
-        <li>✔ Accessible & inclusive design</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ================= USE CASES ================= -->
-  <section class="section">
-    <h2 class="section-title">Where It Can Be Used</h2>
-
-    <div class="grid four">
-      <div class="card small">🏥 Hospitals</div>
-      <div class="card small">🏛 Public Help Desks</div>
-      <div class="card small">🎓 Educational Institutions</div>
-    </div>
-  </section>
-
-  <!-- ================= TRUST & IMPACT ================= -->
-  <section class="section soft-bg">
-    <div class="impact">
-      <h2>Built for Inclusivity. Powered by AI.</h2>
-      <p>
-        Designed to empower communication, ensure safety, and provide
-        equal access in real-world environments.
-      </p>
-    </div>
-  </section>
-
-  <!-- ================= FOOTER ================= -->
-  <footer class="footer">
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>Modern AI communication for sign language users.</h1>
     <p>
-      Accessibility-first AI system designed for inclusive communication.
+      SignAI translates gestures into text and speech with a clean, accessible workflow
+      built for hospitals, schools, and public service environments.
     </p>
-    <p class="small">
-      © 2026 SignAI Project • Built for education, healthcare & public safety
-    </p>
-  </footer>
-  <script>
-/* ============================
-   GLOBAL INTERSECTION OBSERVER
-   For smooth reveal animations
-=============================== */
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("animate-in");
-        observer.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.15 }
-);
+    <div class="hero-actions">
+      <a href="{{ url_for('auth.user_login') }}" class="btn btn-primary">User login</a>
+      <a href="{{ url_for('auth.user_register') }}" class="btn">Create account</a>
+      <a href="{{ url_for('auth.admin_login') }}" class="btn">Admin login</a>
+    </div>
+  </div>
+  <div class="hero-media">
+    <img src="{{ url_for('static', filename='image/home.png') }}" alt="Sign language translation interface preview">
+  </div>
+</section>
 
-/* Observe sections, cards, grids */
-document.querySelectorAll(
-  ".section, .card, .hero-text, .hero-image, .impact"
-).forEach(el => {
-  el.classList.add("animate-hidden");
-  observer.observe(el);
-});
+<section class="section">
+  <h2>Core workflow</h2>
+  <div class="grid grid-3">
+    <article class="card feature-item">
+      <h3>Sign to text and voice</h3>
+      <p>Capture gestures and convert them in real time to readable text and natural audio output.</p>
+    </article>
+    <article class="card feature-item">
+      <h3>Text to sign guidance</h3>
+      <p>Type responses and convert them into visual sign support for two-way communication.</p>
+    </article>
+    <article class="card feature-item">
+      <h3>Analytics and safety logs</h3>
+      <p>Track usage, accuracy trends, and emergency interactions in one dashboard.</p>
+    </article>
+  </div>
+</section>
 
-/* ============================
-   HERO IMAGE FLOAT EFFECT
-=============================== */
-const heroImage = document.querySelector(".hero-image img");
-
-if (heroImage) {
-  heroImage.addEventListener("mousemove", (e) => {
-    const rect = heroImage.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const rotateX = (y / rect.height - 0.5) * -10;
-    const rotateY = (x / rect.width - 0.5) * 10;
-
-    heroImage.style.transform = `
-      perspective(800px)
-      rotateX(${rotateX}deg)
-      rotateY(${rotateY}deg)
-      scale(1.03)
-    `;
-  });
-
-  heroImage.addEventListener("mouseleave", () => {
-    heroImage.style.transform = "none";
-  });
-}
-
-/* ============================
-   CTA BUTTON RIPPLE EFFECT
-=============================== */
-document.querySelectorAll(".btn-primary, .btn-outline").forEach(button => {
-  button.addEventListener("click", function (e) {
-    const ripple = document.createElement("span");
-    ripple.classList.add("ripple");
-
-    const rect = button.getBoundingClientRect();
-    ripple.style.left = `${e.clientX - rect.left}px`;
-    ripple.style.top = `${e.clientY - rect.top}px`;
-
-    button.appendChild(ripple);
-
-    setTimeout(() => ripple.remove(), 600);
-  });
-});
-
-/* ============================
-   AUTO HERO TEXT TYPING EFFECT
-=============================== */
-const heroHeadline = document.querySelector(".hero-text h1");
-
-if (heroHeadline) {
-  const text = heroHeadline.innerText;
-  heroHeadline.innerText = "";
-  let index = 0;
-
-  function typeEffect() {
-    if (index < text.length) {
-      heroHeadline.innerText += text.charAt(index);
-      index++;
-      setTimeout(typeEffect, 30);
-    }
-  }
-
-  typeEffect();
-}
-
-/* ============================
-   NAVBAR SCROLL SHADOW
-=============================== */
-const navbar = document.querySelector(".navbar");
-
-window.addEventListener("scroll", () => {
-  if (window.scrollY > 40) {
-    navbar.style.background = "rgba(15, 23, 42, 0.85)";
-    navbar.style.backdropFilter = "blur(10px)";
-    navbar.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
-    navbar.style.borderRadius = "16px";
-    navbar.style.padding = "0.8rem 1.5rem";
-  } else {
-    navbar.style.background = "transparent";
-    navbar.style.boxShadow = "none";
-  }
-});
-
-/* ============================
-   CSS-IN-JS FOR ANIMATIONS
-=============================== */
-const style = document.createElement("style");
-style.innerHTML = `
-  .animate-hidden {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-  }
-
-  .animate-in {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .btn-primary, .btn-outline {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: rgba(255,255,255,0.6);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: ripple 0.6s ease-out;
-    pointer-events: none;
-  }
-
-  @keyframes ripple {
-    from {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.7;
-    }
-    to {
-      transform: translate(-50%, -50%) scale(15);
-      opacity: 0;
-    }
-  }
-`;
-document.head.appendChild(style);
-</script>
-
-
-</body>
-</html>
+<section class="section">
+  <h2>Designed for professional use</h2>
+  <div class="grid grid-2">
+    <article class="card feature-item">
+      <h3>Accessible and readable</h3>
+      <p>Clear typography, strong contrast, and mobile-friendly controls for every user group.</p>
+    </article>
+    <article class="card feature-item">
+      <h3>Role-based secure access</h3>
+      <p>Separated user and admin flows with controlled permissions and traceable activity.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

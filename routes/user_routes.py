@@ -2,16 +2,73 @@
 SignAI - Simplified User Routes
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory, abort
 from datetime import datetime
 import mysql.connector
 from config import Config
 from functools import wraps
+import os
+import re
 
 user_bp = Blueprint('user', __name__)
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DATASET_FOLDER = os.path.join(PROJECT_ROOT, "INDIAN SIGN LANGUAGE ANIMATED VIDEOS")
+_DATASET_INDEX = None
+
 def get_db():
     return mysql.connector.connect(**Config.DB_CONFIG)
+
+
+def _normalize_sign_key(text):
+    text = (text or "").strip().lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _dataset_index():
+    global _DATASET_INDEX
+    if _DATASET_INDEX is not None:
+        return _DATASET_INDEX
+
+    index = {}
+    if not os.path.isdir(DATASET_FOLDER):
+        _DATASET_INDEX = index
+        return index
+
+    for name in os.listdir(DATASET_FOLDER):
+        if not name.lower().endswith(".mp4"):
+            continue
+        stem = os.path.splitext(name)[0]
+        key = _normalize_sign_key(stem.replace("_", " ").replace("-", " "))
+        if key and key not in index:
+            index[key] = name
+
+    _DATASET_INDEX = index
+    return index
+
+
+def _lookup_gesture_image(cursor, token):
+    word = token.upper()
+    cursor.execute(
+        """
+        SELECT gesture_name, image_path, description
+        FROM gestures WHERE UPPER(gesture_name) = %s
+        """,
+        (word,),
+    )
+    result = cursor.fetchone()
+    if result:
+        return result
+
+    cursor.execute(
+        """
+        SELECT gesture_name, image_path, description
+        FROM gestures WHERE UPPER(REPLACE(gesture_name,' ','_')) = %s
+        """,
+        (word.replace(" ", "_"),),
+    )
+    return cursor.fetchone()
 
 def login_required(f):
     @wraps(f)
@@ -99,6 +156,16 @@ def sign_to_text():
         return redirect(url_for('user.dashboard'))
 
 # Text to Sign
+@user_bp.route('/sign-video/<path:filename>')
+@login_required
+def sign_video(filename):
+    safe_name = os.path.basename(filename)
+    file_path = os.path.join(DATASET_FOLDER, safe_name)
+    if not os.path.isfile(file_path):
+        abort(404)
+    return send_from_directory(DATASET_FOLDER, safe_name)
+
+
 @user_bp.route('/text-to-sign', methods=['GET', 'POST'])
 @login_required
 def text_to_sign():
@@ -112,66 +179,68 @@ def text_to_sign():
         try:
             conn = get_db()
             cursor = conn.cursor(dictionary=True)
-            
-            # Normalize: keep original casing for display, uppercase for lookup
-            words = input_text.upper().split()
-            gesture_data = {}
-            
-            for word in words:
-                # Try exact match first, then underscore variant
-                cursor.execute("""
-                    SELECT gesture_name, image_path, description
-                    FROM gestures WHERE UPPER(gesture_name) = %s
-                """, (word,))
-                result = cursor.fetchone()
 
-                if not result:
-                    # Try underscore version (e.g. GOOD_MORNING)
-                    cursor.execute("""
-                        SELECT gesture_name, image_path, description
-                        FROM gestures WHERE UPPER(REPLACE(gesture_name,' ','_')) = %s
-                    """, (word.replace(' ', '_'),))
-                    result = cursor.fetchone()
+            dataset = _dataset_index()
+            tokens = re.findall(r"[A-Za-z0-9']+", input_text)
+            sign_units = []
+            i = 0
 
-                # Check for realistic replacement in sign_animations or signs
-                if not result:
-                    # Fallback for common words if not in DB
-                    common_map = {
-                        'HI': 'images/signs/hi.png',
-                        'HELLO': 'images/signs/hi.png',
-                        'OK': 'images/signs/ok.png',
-                    }
-                    if word in common_map:
-                        result = {
-                            'gesture_name': word,
-                            'image_path': common_map[word],
-                            'description': f'Realistic {word} gesture'
-                        }
-                
-                # Double check file exists
-                if result and result.get('image_path'):
-                    full_p = os.path.join(Config.STATIC_FOLDER, result['image_path'])
-                    if not os.path.exists(full_p):
-                        # try sign_animations
-                        test_anim = f"sign_animations/{word.lower()}.png"
-                        if os.path.exists(os.path.join(Config.STATIC_FOLDER, test_anim)):
-                            result['image_path'] = test_anim
+            while i < len(tokens):
+                matched = False
 
-                gesture_data[word] = result if result else None
-            
+                # Prefer full phrase videos first (e.g., "thank you", "do not")
+                for size in range(min(4, len(tokens) - i), 0, -1):
+                    chunk = " ".join(tokens[i:i + size])
+                    key = _normalize_sign_key(chunk)
+                    if key in dataset:
+                        sign_units.append({
+                            "label": chunk.upper(),
+                            "video_filename": dataset[key],
+                            "video_url": url_for("user.sign_video", filename=dataset[key]),
+                            "image_path": None,
+                        })
+                        i += size
+                        matched = True
+                        break
+
+                if matched:
+                    continue
+
+                token = tokens[i]
+                gesture = _lookup_gesture_image(cursor, token)
+
+                if gesture and gesture.get("image_path"):
+                    sign_units.append({
+                        "label": token.upper(),
+                        "video_filename": None,
+                        "video_url": None,
+                        "image_path": gesture["image_path"],
+                    })
+                    i += 1
+                    continue
+
+                # Word-wise only: do not split unknown words into characters.
+                sign_units.append({
+                    "label": token.upper(),
+                    "video_filename": None,
+                    "video_url": None,
+                    "image_path": None,
+                })
+
+                i += 1
+
             cursor.close()
             conn.close()
             
             return render_template('user/text_to_sign.html',
                 input_text=input_text,
-                words=words,
-                gesture_data=gesture_data,
+                sign_units=sign_units,
                 show_result=True
             )
         except Exception as e:
             flash(f'Error: {str(e)}', 'error')
     
-    return render_template('user/text_to_sign.html', show_result=False, gesture_data={})
+    return render_template('user/text_to_sign.html', show_result=False, sign_units=[])
 
 # History
 @user_bp.route('/history')

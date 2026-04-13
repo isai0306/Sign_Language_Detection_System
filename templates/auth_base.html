@@ -9,48 +9,32 @@
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ui.css') }}">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Inter", system-ui, sans-serif;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        /* ================= BACK BUTTON ================= */
         .back-btn {
             position: fixed;
             top: 24px;
             left: 24px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 0.55rem 1rem;
+            min-height: 44px;
+            padding: 0 14px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.35);
-            color: white;
+            background: rgba(255, 255, 255, 0.8);
+            border: var(--border);
+            box-shadow: var(--shadow-soft);
+            color: var(--neutral-600);
             font-weight: 600;
             font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.25s ease;
+            transition: all 0.2s ease;
             z-index: 1000;
         }
 
         .back-btn:hover {
-            transform: translateX(-3px);
-            background: rgba(255,255,255,0.28);
-        }
-
-        .back-btn span {
-            font-size: 1.1rem;
+            transform: translateX(-2px);
+            color: var(--primary);
+            background: #fff;
         }
     </style>
 
@@ -64,6 +48,16 @@
         <span>←</span> Back
     </a>
     {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
     {% block content %}{% endblock %}
 
