@@ -47,6 +47,6 @@ if __name__ == '__main__':
     os.makedirs('static/images/signs', exist_ok=True)
     os.makedirs('static/audio_cache', exist_ok=True)
     
-    print("🚀 SignAI Server Starting...")
-    print("🌐 URL: http://localhost:5000")
+    print("SignAI Server Starting...")
+    print("URL: http://localhost:5000")
     app.run(debug=True, port=5000, host='0.0.0.0')

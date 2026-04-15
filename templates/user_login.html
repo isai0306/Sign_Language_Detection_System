@@ -2,15 +2,6 @@
 
 {% block title %}User Login | SignAI{% endblock %}
 
-{% block extra_css %}
-<style>
-body {
-  background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.2), transparent 50%),
-              linear-gradient(170deg, #f8fbff 0%, #eef4ff 100%);
-}
-</style>
-{% endblock %}
-
 {% block content %}
 <section class="page-shell">
   <div class="card auth-card">
@@ -32,7 +23,7 @@ body {
     </form>
 
     <p class="helper" style="margin-top: var(--space-2);">
-      New here? <a href="{{ url_for('auth.user_register') }}" style="color: var(--primary); font-weight: 600;">Create account</a>
+      New here? <a href="{{ url_for('auth.user_register') }}">Create account</a>
     </p>
     <p class="helper">Fast, secure, and accessible communication.</p>
   </div>

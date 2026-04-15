@@ -17,6 +17,8 @@
     line-height: 1.15;
     letter-spacing: -0.02em;
     margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-weight: 800;
   }
 
   .hero p {
@@ -46,11 +48,14 @@
     font-size: clamp(1.375rem, 2.8vw, 2rem);
     margin: 0 0 var(--space-3);
     letter-spacing: -0.01em;
+    color: var(--text-primary);
+    font-weight: 700;
   }
 
   .feature-item h3 {
     margin: 0 0 var(--space-1);
     font-size: 1.1rem;
+    color: var(--text-primary);
   }
 
   .feature-item p {
@@ -69,15 +74,15 @@
 {% block content %}
 <section class="hero">
   <div>
-    <h1>Modern AI communication for sign language users.</h1>
+    <h1>Modern AI communication for <span class="accent-lime">sign language</span> users.</h1>
     <p>
       SignAI translates gestures into text and speech with a clean, accessible workflow
       built for hospitals, schools, and public service environments.
     </p>
     <div class="hero-actions">
       <a href="{{ url_for('auth.user_login') }}" class="btn btn-primary">User login</a>
-      <a href="{{ url_for('auth.user_register') }}" class="btn">Create account</a>
-      <a href="{{ url_for('auth.admin_login') }}" class="btn">Admin login</a>
+      <a href="{{ url_for('auth.user_register') }}" class="btn btn-ghost">Create account</a>
+      <a href="{{ url_for('auth.admin_login') }}" class="btn btn-ghost">Admin login</a>
     </div>
   </div>
   <div class="hero-media">

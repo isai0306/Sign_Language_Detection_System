@@ -227,7 +227,7 @@
     {% if category_stats %}
     <div class="pie-chart">
       {% set total_cat = category_stats | sum(attribute='count') %}
-      {% set colors = ['#2563eb', '#f97316', '#22c55e'] %}
+      {% set colors = ['#00c2cb', '#f97316', '#a4d65e'] %}
       {% for stat in category_stats %}
       <div class="pie-item">
         <div class="pie-color" style="background: {{ colors[loop.index0 % 3] }};"></div>
@@ -260,7 +260,7 @@
     {% if language_stats %}
     <div class="pie-chart">
       {% set total_lang = language_stats | sum(attribute='count') %}
-      {% set lang_colors = {'TAMIL': '#2563eb', 'HINDI': '#f97316', 'BOTH': '#22c55e'} %}
+      {% set lang_colors = {'TAMIL': '#00c2cb', 'HINDI': '#f97316', 'BOTH': '#a4d65e'} %}
       {% for stat in language_stats %}
       <div class="pie-item">
         <div class="pie-color" style="background: {{ lang_colors.get(stat.preferred_language, '#64748b') }};"></div>

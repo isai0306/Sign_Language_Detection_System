@@ -6,10 +6,10 @@
 <style>
 /* ================= VARIABLES ================= */
 :root {
-  --primary: #3b82f6;
-  --accent: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
+  --primary: #00c2cb;
+  --accent: #a4d65e;
+  --danger: #f87171;
+  --warning: #fbbf24;
 }
 
 /* ================= DASHBOARD LAYOUT ================= */
@@ -20,12 +20,12 @@
 }
 
 .welcome-section {
-  background: linear-gradient(135deg, var(--primary), #1e40af);
-  color: white;
+  background: linear-gradient(135deg, var(--primary), #007a82);
+  color: #f4f4f5;
   padding: 2.5rem;
   border-radius: 20px;
   margin-bottom: 2rem;
-  box-shadow: 0 20px 50px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 194, 203, 0.25);
 }
 
 .welcome-section h1 {
@@ -75,7 +75,7 @@
 
 .stat-card .stat-label {
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -114,7 +114,7 @@
 }
 
 .feature-card p {
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
@@ -122,8 +122,8 @@
 .feature-btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary), #1e40af);
-  color: white;
+  background: linear-gradient(135deg, var(--primary), #007a82);
+  color: #0a0a0a;
   border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
@@ -132,7 +132,7 @@
 
 .feature-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 194, 203, 0.28);
 }
 
 /* ================= RECENT ACTIVITY ================= */
@@ -165,7 +165,7 @@
 }
 
 .activity-item:hover {
-  background: rgba(37, 99, 235, 0.05);
+  background: rgba(0, 194, 203, 0.06);
   border-radius: 8px;
 }
 
@@ -184,13 +184,13 @@
 }
 
 .activity-translation {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 0.3rem;
 }
 
 .activity-time {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 

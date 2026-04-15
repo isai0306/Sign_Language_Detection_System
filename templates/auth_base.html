@@ -21,10 +21,10 @@
             min-height: 44px;
             padding: 0 14px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.8);
+            background: var(--bg-card);
             border: var(--border);
             box-shadow: var(--shadow-soft);
-            color: var(--neutral-600);
+            color: var(--text-muted);
             font-weight: 600;
             font-size: 0.9rem;
             transition: all 0.2s ease;
@@ -33,14 +33,14 @@
 
         .back-btn:hover {
             transform: translateX(-2px);
-            color: var(--primary);
-            background: #fff;
+            color: var(--accent-teal);
+            border-color: var(--border-focus);
         }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="auth-page">
 
     <!-- BACK BUTTON -->
     {% if show_back is not defined or show_back %}
