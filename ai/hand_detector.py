@@ -6,6 +6,7 @@ Uses MediaPipe for real-time hand landmark detection
 import cv2
 import mediapipe as mp
 import numpy as np
+from types import SimpleNamespace
 
 class HandDetector:
     """
@@ -38,7 +39,15 @@ class HandDetector:
             min_detection_confidence=min_detection_confidence,
             min_tracking_confidence=min_tracking_confidence
         )
-        
+        # Single-frame snapshots (training uploads, still images) need static mode;
+        # stream mode often misses hands on one-off JPEGs.
+        self.hands_static = self.mp_hands.Hands(
+            static_image_mode=True,
+            max_num_hands=max_num_hands,
+            min_detection_confidence=0.45,
+            min_tracking_confidence=0.45,
+        )
+
     def find_hands(self, frame, draw=True):
         """
         Detect hands in frame and optionally draw landmarks
@@ -70,7 +79,31 @@ class HandDetector:
                 )
         
         return frame, results
-    
+
+    def find_hands_static(self, frame, draw=True):
+        """
+        Detect hands on a single BGR frame (JPEG snapshot, training capture).
+        Uses static_image_mode=True so MediaPipe is reliable without prior frames.
+        """
+        if frame is None or frame.size == 0:
+            return frame, SimpleNamespace(multi_hand_landmarks=None, multi_handedness=None)
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        with self._lock:
+            results = self.hands_static.process(frame_rgb)
+
+        if draw and results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                self.mp_drawing.draw_landmarks(
+                    frame,
+                    hand_landmarks,
+                    self.mp_hands.HAND_CONNECTIONS,
+                    self.mp_drawing_styles.get_default_hand_landmarks_style(),
+                    self.mp_drawing_styles.get_default_hand_connections_style(),
+                )
+
+        return frame, results
+
     def extract_landmarks(self, results):
         """
         Extract hand landmarks as numpy array
@@ -316,6 +349,8 @@ class HandDetector:
     def close(self):
         """Release resources"""
         self.hands.close()
+        if getattr(self, "hands_static", None) is not None:
+            self.hands_static.close()
 
 
 # Utility function for standalone testing

@@ -52,6 +52,7 @@
 
 .camera-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1.5rem;
   justify-content: center;
@@ -77,6 +78,16 @@
 
 .control-btn.capture:hover:not(:disabled) {
   background: #16a34a;
+  transform: scale(1.05);
+}
+
+.control-btn.record {
+  background: linear-gradient(135deg, var(--accent-teal, #00c2cb), var(--accent-teal-dim, #007a82));
+  color: #0a0a0a;
+}
+
+.control-btn.record:hover:not(:disabled) {
+  filter: brightness(1.08);
   transform: scale(1.05);
 }
 
@@ -204,11 +215,11 @@
   <div class="instructions">
     <h3>📋 Instructions</h3>
     <ol>
-      <li>Position your hand clearly in the camera frame</li>
-      <li>Perform the "{{ gesture_name }}" gesture</li>
-      <li>Click "Capture Sample" when ready (aim for 20-30 samples)</li>
-      <li>Vary your hand position, angle, and distance for better training</li>
-      <li>Click "Finish Training" when done</li>
+      <li><strong>Recommended:</strong> use <strong>Record 5s clip</strong> — perform the full "{{ gesture_name }}" gesture smoothly while recording.</li>
+      <li>Keep your hand in frame with good lighting for the whole 5 seconds.</li>
+      <li>Each clip adds many landmark frames to training (motion, not just one photo).</li>
+      <li>Optional: <strong>Capture sample</strong> adds a single still frame.</li>
+      <li>Record several clips from different angles, then click <strong>Finish Training</strong>.</li>
     </ol>
   </div>
 
@@ -216,12 +227,15 @@
 
   <div class="training-grid">
     <div class="camera-section">
-      <video id="videoElement" autoplay playsinline></video>
+      <video id="videoElement" autoplay playsinline muted></video>
       <canvas id="canvas" style="display: none;"></canvas>
-      
+      <p id="camStatus" class="cam-status" style="margin-top:0.75rem;font-size:0.9rem;color:var(--text-muted);text-align:center;">Starting camera…</p>
       <div class="camera-controls">
-        <button id="captureBtn" class="control-btn capture">
-          📸 Capture Sample
+        <button id="recordBtn" type="button" class="control-btn record" disabled>
+          Record 5s clip
+        </button>
+        <button id="captureBtn" type="button" class="control-btn capture" disabled>
+          One frame
         </button>
       </div>
     </div>
@@ -239,7 +253,7 @@
 
       <div class="stat-item">
         <div class="stat-value" id="targetCount">30</div>
-        <div class="stat-label">Target Samples</div>
+        <div class="stat-label">Target training frames</div>
       </div>
 
       <button id="finishBtn" class="finish-btn" disabled>
@@ -259,66 +273,162 @@ const videoElement = document.getElementById('videoElement');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const captureBtn = document.getElementById('captureBtn');
+const recordBtn = document.getElementById('recordBtn');
 const finishBtn = document.getElementById('finishBtn');
 const sampleCountEl = document.getElementById('sampleCount');
 const progressFillEl = document.getElementById('progressFill');
 const alertBox = document.getElementById('alertBox');
+const camStatus = document.getElementById('camStatus');
+
+const ADD_SAMPLE_URL = "{{ url_for('training.add_sample') }}";
 
 let sampleCount = {{ sample_count }};
-const gestureName = "{{ gesture_name }}";
+const gestureName = {{ gesture_name | tojson }};
 const targetSamples = 30;
 const minSamples = 10;
+const MOTION_MS = 5000;
+const MOTION_INTERVAL_MS = 125;
 
-// Start camera
+function setCamReady() {
+  if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+    captureBtn.disabled = false;
+    recordBtn.disabled = false;
+    if (camStatus) camStatus.textContent = 'Camera ready — record a 5s motion clip or capture one frame.';
+  }
+}
+
+// Start camera (wait for video dimensions before enabling capture)
 async function startCamera() {
+  captureBtn.disabled = true;
+  recordBtn.disabled = true;
+  if (camStatus) camStatus.textContent = 'Requesting camera…';
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { width: 640, height: 480 } 
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        facingMode: 'user',
+      },
+      audio: false,
     });
     videoElement.srcObject = stream;
-    captureBtn.disabled = false;
+    const onReady = () => {
+      videoElement.play().catch(() => {});
+      setCamReady();
+      requestAnimationFrame(setCamReady);
+    };
+    videoElement.onloadedmetadata = onReady;
+    videoElement.addEventListener('playing', setCamReady);
+    videoElement.onresize = () => setCamReady();
+    setTimeout(setCamReady, 400);
   } catch (err) {
+    if (camStatus) camStatus.textContent = 'Camera unavailable.';
     showAlert('Camera access denied: ' + err.message, 'error');
   }
 }
 
-// Capture sample
-captureBtn.addEventListener('click', async function() {
+// Record ~5s motion: sample frames at ~8 FPS, upload as batch
+recordBtn.addEventListener('click', async function () {
+  const w = videoElement.videoWidth;
+  const h = videoElement.videoHeight;
+  if (!w || !h) {
+    showAlert('Camera not ready yet.', 'error');
+    return;
+  }
+
   captureBtn.disabled = true;
-  
-  // Draw video frame to canvas
-  canvas.width = videoElement.videoWidth;
-  canvas.height = videoElement.videoHeight;
-  ctx.drawImage(videoElement, 0, 0);
-  
-  // Convert to base64
-  const frameData = canvas.toDataURL('image/jpeg');
-  
+  recordBtn.disabled = true;
+
+  const frames = [];
+  const endAt = Date.now() + MOTION_MS;
+  while (Date.now() < endAt) {
+    const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    if (camStatus) camStatus.textContent = 'Recording motion — ' + left + ' s left. Keep gesturing.';
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(videoElement, 0, 0);
+    frames.push(canvas.toDataURL('image/jpeg', 0.82));
+    await new Promise(function (r) { setTimeout(r, MOTION_INTERVAL_MS); });
+  }
+
+  if (camStatus) camStatus.textContent = 'Uploading clip…';
+
   try {
-    // Send to server
-    const response = await fetch('/admin/training/api/add-sample', {
+    const response = await fetch(ADD_SAMPLE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({
         gesture_name: gestureName,
-        frame: frameData
-      })
+        frames: frames,
+      }),
     });
-    
     const data = await response.json();
-    
     if (data.success) {
       sampleCount = data.sample_count;
       updateUI();
-      showAlert(`✅ Sample ${sampleCount} captured!`, 'success');
+      var msg = 'Motion clip saved: +' + data.frames_added + ' frames';
+      if (data.frames_skipped) msg += ' (' + data.frames_skipped + ' skipped, no hand)';
+      showAlert(msg + '.', 'success');
     } else {
-      showAlert('❌ ' + data.error, 'error');
+      showAlert(data.error || 'Clip upload failed', 'error');
     }
   } catch (err) {
-    showAlert('❌ Error: ' + err.message, 'error');
+    showAlert('Error: ' + err.message, 'error');
   }
-  
-  setTimeout(() => captureBtn.disabled = false, 500);
+
+  if (camStatus) camStatus.textContent = 'Camera ready — record another clip or capture one frame.';
+  captureBtn.disabled = false;
+  recordBtn.disabled = false;
+});
+
+// Single-frame capture
+captureBtn.addEventListener('click', async function() {
+  captureBtn.disabled = true;
+  recordBtn.disabled = true;
+
+  const w = videoElement.videoWidth;
+  const h = videoElement.videoHeight;
+  if (!w || !h) {
+    showAlert('Camera not ready yet. Wait for the preview, then try again.', 'error');
+    captureBtn.disabled = false;
+    recordBtn.disabled = false;
+    return;
+  }
+
+  canvas.width = w;
+  canvas.height = h;
+  ctx.drawImage(videoElement, 0, 0);
+  const frameData = canvas.toDataURL('image/jpeg', 0.92);
+
+  try {
+    const response = await fetch(ADD_SAMPLE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        gesture_name: gestureName,
+        frame: frameData,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      sampleCount = data.sample_count;
+      updateUI();
+      showAlert('Sample ' + sampleCount + ' captured.', 'success');
+    } else {
+      showAlert(data.error || 'Capture failed', 'error');
+    }
+  } catch (err) {
+    showAlert('Error: ' + err.message, 'error');
+  }
+
+  setTimeout(() => {
+    captureBtn.disabled = false;
+    recordBtn.disabled = false;
+  }, 400);
 });
 
 // Finish training
@@ -338,14 +448,15 @@ function updateUI() {
   finishBtn.disabled = sampleCount < minSamples;
 }
 
-// Show alert
+// Show alert (matches global .alert-success / .alert-error)
 function showAlert(message, type) {
-  alertBox.innerHTML = `<div class="alert ${type}">${message}</div>`;
-  setTimeout(() => alertBox.innerHTML = '', 3000);
+  const cls = type === 'error' ? 'alert-error' : 'alert-success';
+  alertBox.innerHTML = '<div class="alert ' + cls + '">' + message + '</div>';
+  setTimeout(() => { alertBox.innerHTML = ''; }, 4000);
 }
 
 // Initialize
 startCamera();
 updateUI();
 </script>
-{% endblock %}{
+{% endblock %}

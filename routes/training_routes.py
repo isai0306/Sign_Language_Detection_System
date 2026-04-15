@@ -45,6 +45,37 @@ def admin_required(f):
     return decorated_function
 
 
+def _decode_bgr_from_data_url(frame_data):
+    """Decode data URL or raw base64 JPEG/PNG to BGR ndarray."""
+    import cv2
+
+    if not frame_data or not isinstance(frame_data, str):
+        return None
+    raw_b64 = frame_data.split(",", 1)[1] if "," in frame_data else frame_data
+    try:
+        frame_bytes = base64.b64decode(raw_b64)
+        nparr = np.frombuffer(frame_bytes, np.uint8)
+        return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    except Exception:
+        return None
+
+
+def _normalized_landmarks_from_bgr(frame):
+    """Return flat 63 landmark vector or None if hand missing / invalid."""
+    if frame is None or frame.size == 0:
+        return None
+    _, results = hand_detector.find_hands_static(frame, draw=False)
+    if not results.multi_hand_landmarks:
+        return None
+    landmarks_list = hand_detector.extract_landmarks(results)
+    if not landmarks_list:
+        return None
+    normalized = hand_detector.normalize_landmarks(landmarks_list[0])
+    if np.sum(np.abs(normalized)) < 0.01:
+        return None
+    return normalized.tolist()
+
+
 # ============================
 # TRAINING DASHBOARD
 # ============================
@@ -104,79 +135,97 @@ def collect_data(gesture_name):
 @admin_required
 def add_sample():
     """
-    Add training sample with enhanced validation
-    
-    Expected JSON:
-    {
-        "gesture_name": "HELLO",
-        "frame": "base64_encoded_image"
-    }
+    Add one still frame, or many frames from a motion clip (~5s video sampled as JPEGs).
+
+    Single frame JSON:
+        { "gesture_name": "HELLO", "frame": "data:image/jpeg;base64,..." }
+
+    Motion clip JSON:
+        { "gesture_name": "HELLO", "frames": [ "data:image/jpeg;base64,...", ... ] }
     """
     try:
-        import cv2
-
         data = request.get_json()
         gesture_name = data.get('gesture_name')
-        frame_data = data.get('frame')
-        
-        if not gesture_name or not frame_data:
-            return jsonify({'success': False, 'error': 'Missing data'}), 400
-        
-        # Decode frame
-        frame_data = frame_data.split(',')[1] if ',' in frame_data else frame_data
-        frame_bytes = base64.b64decode(frame_data)
-        nparr = np.frombuffer(frame_bytes, np.uint8)
-        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        # Detect hands
-        _, results = hand_detector.find_hands(frame, draw=False)
-        
-        if not results.multi_hand_landmarks:
-            return jsonify({
-                'success': False,
-                'error': 'No hands detected. Please ensure your hand is clearly visible.'
-            })
-        
-        # Extract landmarks
-        landmarks_list = hand_detector.extract_landmarks(results)
-        if not landmarks_list:
-            return jsonify({
-                'success': False,
-                'error': 'Could not extract landmarks. Try repositioning your hand.'
-            })
-        
-        # Normalize
-        landmarks = landmarks_list[0]
-        normalized = hand_detector.normalize_landmarks(landmarks)
-        
-        # Validate landmarks quality
-        if np.sum(np.abs(normalized)) < 0.01:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid landmarks detected. Please try again.'
-            })
-        
-        # Add sample
-        success = trainer.add_sample(gesture_name, normalized.tolist())
-        
-        if success:
+        if not gesture_name:
+            return jsonify({'success': False, 'error': 'Missing gesture name'}), 400
+
+        frames_in = data.get('frames')
+        if isinstance(frames_in, list) and len(frames_in) > 0:
+            if len(frames_in) > 80:
+                return jsonify({'success': False, 'error': 'Too many frames (max 80 per clip)'}), 400
+
+            added = 0
+            skipped = 0
+            for fd in frames_in:
+                frame = _decode_bgr_from_data_url(fd)
+                if frame is None:
+                    skipped += 1
+                    continue
+                vec = _normalized_landmarks_from_bgr(frame)
+                if vec is None:
+                    skipped += 1
+                    continue
+                if trainer.add_sample(gesture_name, vec):
+                    added += 1
+                else:
+                    skipped += 1
+
+            if added == 0:
+                return jsonify({
+                    'success': False,
+                    'error': (
+                        'No valid hand frames in this clip. Keep your hand in view with good '
+                        'lighting and perform the gesture smoothly for the full recording.'
+                    ),
+                    'frames_added': 0,
+                    'frames_skipped': skipped,
+                }), 400
+
             sample_count = len(trainer.samples[gesture_name])
             recommended = 15
             progress = min(100, int((sample_count / recommended) * 100))
-            
             return jsonify({
                 'success': True,
                 'sample_count': sample_count,
+                'frames_added': added,
+                'frames_skipped': skipped,
                 'progress': progress,
                 'recommended': recommended,
-                'message': f'Sample {sample_count} added successfully! ✅'
+                'message': f'Motion clip saved: {added} frames added ({skipped} skipped).',
             })
-        else:
+
+        frame_data = data.get('frame')
+        if not frame_data:
+            return jsonify({'success': False, 'error': 'Missing frame or frames[]'}), 400
+
+        frame = _decode_bgr_from_data_url(frame_data)
+        if frame is None or frame.size == 0:
             return jsonify({
                 'success': False,
-                'error': 'Failed to add sample'
+                'error': 'Could not read camera image. Wait until the preview is visible, then capture again.',
+            }), 400
+
+        vec = _normalized_landmarks_from_bgr(frame)
+        if vec is None:
+            return jsonify({
+                'success': False,
+                'error': 'No hands detected. Please ensure your hand is clearly visible.',
             })
-        
+
+        if not trainer.add_sample(gesture_name, vec):
+            return jsonify({'success': False, 'error': 'Failed to add sample'})
+
+        sample_count = len(trainer.samples[gesture_name])
+        recommended = 15
+        progress = min(100, int((sample_count / recommended) * 100))
+        return jsonify({
+            'success': True,
+            'sample_count': sample_count,
+            'progress': progress,
+            'recommended': recommended,
+            'message': f'Sample {sample_count} added successfully.',
+        })
+
     except Exception as e:
         print(f"Error adding sample: {e}")
         import traceback
